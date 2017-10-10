@@ -10,10 +10,13 @@
 #define DOOR_OPEN_TIME 15000
 #define PULSE_WIDTH 200
 #define CLOSE_DISTANCE 10.0
+#define REPORT_TIME 300000
+
 
 bool currentDoorState = getDoorState();
 bool doPulse = false;
 Timer doorOpeningTimer;
+Timer reporter(REPORT_TIME);
 
 ZUNO_SETUP_CHANNELS(ZUNO_SWITCH_BINARY(getter, setter));
 
@@ -37,12 +40,16 @@ void loop()
   if (doPulse) {
     pulse(PULSE_WIDTH);
     doPulse = false;
-    doorOpeningTimer.Start();
+    doorOpeningTimer.Start(DOOR_OPEN_TIME);
   }
-  if (!doorOpeningTimer.IsElapse(DOOR_OPEN_TIME)) {
+  if (!doorOpeningTimer.IsElapse()) {
     //
     // When door is moving send report to controller every 1/2 sec.
     //
+    currentDoorState = getDoorState();
+    zunoSendReport(1);
+  }
+  if (reporter.IsElapse()) {
     currentDoorState = getDoorState();
     zunoSendReport(1);
   }
