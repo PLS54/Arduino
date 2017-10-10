@@ -1,12 +1,19 @@
+//
+// Garage door opener 2.0
+//
+#include <Timer.h>
+
 #define TRIG_PIN 11
 #define ECHO_PIN 10
 #define DOOR_PIN 9
-#define MIN_DIST 4.0
-#define MAX_DIST 200.0
+#define LOOP_DELAY 500
+#define DOOR_OPEN_TIME 15000
+#define PULSE_WIDTH 200
+#define CLOSE_DISTANCE 10.0
 
-bool currentDoorState = false;;
+bool currentDoorState = getDoorState();
 bool doPulse = false;
-byte loopCounter = 0;
+Timer doorOpeningTimer;
 
 ZUNO_SETUP_CHANNELS(ZUNO_SWITCH_BINARY(getter, setter));
 
@@ -28,24 +35,23 @@ void loop()
     zunoSendReport(1);
   }
   if (doPulse) {
-    pulse(200);
+    pulse(PULSE_WIDTH);
     doPulse = false;
-    delay(1000);
-    zunoSendReport(1);
+    doorOpeningTimer.Start();
   }
-  delay(500);
-  loopCounter++;
-  if (loopCounter >= 10) {
-    // sanity check every 10 sec.
-    loopCounter = 0;
+  if (!doorOpeningTimer.IsElapse(DOOR_OPEN_TIME)) {
+    //
+    // When door is moving send report to controller every 1/2 sec.
+    //
     currentDoorState = getDoorState();
     zunoSendReport(1);
   }
+  delay(LOOP_DELAY);
 }
 
 bool getDoorState()
 {
-  return MeasureDistance(TRIG_PIN, ECHO_PIN) > 10 ? true : false;
+  return MeasureDistance(TRIG_PIN, ECHO_PIN) > CLOSE_DISTANCE ? true : false;
 }
 
 void pulse(int duration)
@@ -57,14 +63,18 @@ void pulse(int duration)
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-long MeasureDistance(int trigPin, int echoPin)
+float MeasureDistance(int trigPin, int echoPin)
 {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  return (pulseIn(echoPin, HIGH, 20000) / 58.2);
+  unsigned long pulseLength = pulseIn(echoPin, HIGH, 1000);
+  if (pulseLength == 0) {
+    return 100.0;
+  }
+  return (pulseLength / 58.2);
 }
 
 void setter (byte value) 
