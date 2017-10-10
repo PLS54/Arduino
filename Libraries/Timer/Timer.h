@@ -2,12 +2,15 @@
 
 class Timer{
 private:
- unsigned long lastTrigger;
+  unsigned long lastTrigger;
   bool watching;
+  bool autoRestart = false;
+  unsigned long period = 0;
 
 public:
  Timer();
- void Start();
- bool IsElapse(unsigned long period);
+ Timer(unsigned long period);
+ void Start(unsigned long period);
+ bool IsElapse();
 };
 
