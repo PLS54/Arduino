@@ -1,5 +1,4 @@
 //
-// Garage door opener 2.0
 // Garage door opener 2.1
 //
 #include <Timer.h>
