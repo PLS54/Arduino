@@ -7,12 +7,31 @@
 #define STEPS_PER_MOTOR_REVOLUTION 32   
 #define STEPS_PER_OUTPUT_REVOLUTION 32 * 64  //2048  
 #define IR_PIN 13
+//
+#define FAST_BACKWARD   0xCC108
+#define PLAY            0x200B
+#define FAST_FORWARD    0x2C108
+#define DOWN_ARROW      0x9E108
+#define UP_ARROW        0x1E108
+#define LEFT_ARROW      0x5E108
+#define RIGHT_ARROW     0xDE108
+#define RETURN          0xBE108
 
+#define MOVE_TO_0       FAST_BACKWARD
+#define MOVE_TO_50      PLAY
+#define MOVE_TO_100     FAST_FORWARD
+#define MOVE_DOWN_10    DOWN_ARROW
+#define MOVE_UP_10      UP_ARROW
+#define ADJUST_DOWN     LEFT_ARROW
+#define ADJUST_UP       RIGHT_ARROW
+#define REPORT_POSITION RETURN
+//
+#define REPEAT  0xFFFFFFFF
+//
 Stepper blindMotor(STEPS_PER_MOTOR_REVOLUTION, 8, 10, 9, 11);
 Blind myBlind(&blindMotor, 400);
 IRrecv irDetect(IR_PIN);
 decode_results irIn;
-int direction = 1;
 unsigned long lastCommand = 0;
 
 void setup()
@@ -25,55 +44,33 @@ void setup()
 
 void loop() {
   if (irDetect.decode(&irIn)) {
-    Serial.println(irIn.value, HEX);
+//    Serial.println(irIn.value, HEX);
     irDetect.resume(); // Receive the next value
-    if (irIn.value != 0xFFFFFFFF) {
+    if (irIn.value != REPEAT) {
       lastCommand = irIn.value;
     }
-    if (irIn.value == 0x37810F) {
+    if (irIn.value == ADJUST_DOWN || (irIn.value == REPEAT && lastCommand == ADJUST_DOWN)) {
       blindMotor.step(-1);
-      Serial.println("starting reset");
-    } 
-    if (irIn.value == 0x37A10B) {
+    }
+    if (irIn.value == ADJUST_UP || (irIn.value == REPEAT && lastCommand == ADJUST_UP)) {
+      blindMotor.step(1);
+    }
+    if (irIn.value == MOVE_DOWN_10 || (irIn.value == REPEAT && lastCommand == MOVE_DOWN_10)) {
       myBlind.Move(-10);
-      Serial.println("starting move");
     }
-    if (irIn.value == 0x36812F) {
+    if (irIn.value == MOVE_UP_10 || (irIn.value == REPEAT && lastCommand == MOVE_UP_10)) {
       myBlind.Move(10);
-      Serial.println("starting move");
     }
-    if (irIn.value == 0xFFFFFFFF && lastCommand == 0x37810F) {
-      blindMotor.step(-1);
-      //Serial.println("repeat");
-    }
-    if (irIn.value == 0xFFFFFFFF && lastCommand == 0x37A10B) {
-      myBlind.Move(-10);
-      //Serial.println("repeat");
-    }
-    if (irIn.value == 0xFFFFFFFF && lastCommand == 0x36812F) {
-      myBlind.Move(10);
-      //Serial.println("repeat");
-    }
-    if (lastCommand == 0) {
-      Serial.println(irIn.value, HEX);
-    }
-    if (irIn.value == 0x37E103) {
-      direction = 1;
-    }
-    if (irIn.value == 0x36B928) {
-      direction = -1;
-    }
-
-    if (irIn.value == 0x36113D) {
+    if (irIn.value == MOVE_TO_0) {
       myBlind.MoveTo(0);
     }
-    if (irIn.value == 0x37111D) {
+    if (irIn.value == PLAY) {
       myBlind.MoveTo(50);
     }
-    if (irIn.value == 0x36912D) {
+    if (irIn.value == MOVE_TO_100) {
       myBlind.MoveTo(100);
     }
-    if (irIn.value == 0x37E902) {
+    if (irIn.value == REPORT_POSITION) {
       unsigned int pos = myBlind.GetCurrentPosition();
       Serial.print("Position: ");
       Serial.println(pos);
