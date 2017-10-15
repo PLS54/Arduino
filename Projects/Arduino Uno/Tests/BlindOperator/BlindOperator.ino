@@ -1,13 +1,12 @@
 #include <Stepper.h>
 #include <EEPROM.h>
-#include "Blind.h"
-#include "Timer.h"
+#include <Blind.h>
+#include <Timer.h>
 #include <IRremote.h>
-#include "RemoteForBlinds.h"
+#include <RemoteForBlinds.h>
 
 #define DELAY 100
 #define STEPS_PER_MOTOR_REVOLUTION 32   
-//#define STEPS_PER_OUTPUT_REVOLUTION 32 * 64  //2048  
 #define IR_PIN 13
 //
 //
