@@ -5,10 +5,9 @@
 #include <IRremote.h>
 #include "RemoteForBlinds.h"
 
-#define DOOR_PIN 9
-#define DELAY 250
+#define DELAY 100
 #define STEPS_PER_MOTOR_REVOLUTION 32   
-#define STEPS_PER_OUTPUT_REVOLUTION 32 * 64  //2048  
+//#define STEPS_PER_OUTPUT_REVOLUTION 32 * 64  //2048  
 #define IR_PIN 13
 //
 //
@@ -31,7 +30,6 @@ void setup()
 
   
   Serial.begin(9600);
-  pinMode(DOOR_PIN, OUTPUT);
   blindMotor.setSpeed(700);   
   Serial.print("Starting: 0x");
   Serial.println(EEPROM.read(0), HEX);
@@ -81,7 +79,7 @@ void loop() {
         remoteInactiveTimer.Start(10000);
         break;
       case RemoteForBlinds::none:
-        delay(100);
+        delay(DELAY);
         break;
     }
   }
