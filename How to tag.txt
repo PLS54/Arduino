@@ -1,0 +1,7 @@
+cd c:\Users\Public\Code\Arduino
+git init
+git status
+git tag -a V1.0 -m "Garage door opener V1.0"
+git push origin --tags
+
+git checkout v1.0
