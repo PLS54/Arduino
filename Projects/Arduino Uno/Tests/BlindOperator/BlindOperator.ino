@@ -26,12 +26,8 @@ void setup()
 
   irDetect = new IRrecv(IR_PIN);
   irDetect->enableIRIn(); // Start the Receiver
-
-  
   Serial.begin(9600);
   blindMotor.setSpeed(700);   
-  Serial.print("Starting: 0x");
-  Serial.println(EEPROM.read(0), HEX);
   if (EEPROM.read(0) != 0xBE) {
     EEPROM.write(0, 0xBE);
     EEPROM.write(1, 0);
