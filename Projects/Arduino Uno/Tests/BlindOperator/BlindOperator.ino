@@ -17,7 +17,7 @@
 Stepper blindMotor(STEPS_PER_MOTOR_REVOLUTION, 8, 10, 9, 11);
 Blind myBlind(&blindMotor);
 RemoteForBlinds myRemote(IR_PIN);
-Timer remoteInactive;
+Timer remoteInactiveTimer;
 
   IRrecv* irDetect;
   decode_results irIn;
@@ -45,8 +45,8 @@ void setup()
 }
 
 void loop() {
-  if (remoteInactive.IsElapse()) {
-    //remoteActive = true;
+  if (remoteInactiveTimer.IsElapse()) {
+    myRemote.Reactivate();
   }
   if (irDetect->decode(&irIn)) {
     unsigned long irValue = irIn.value;
@@ -76,6 +76,9 @@ void loop() {
       case RemoteForBlinds::reportPosition:
         Serial.print("Position: ");
         Serial.println(myBlind.GetCurrentPosition());
+        break;
+      case RemoteForBlinds::remoteDeactivated:
+        remoteInactiveTimer.Start(10000);
         break;
       case RemoteForBlinds::none:
         delay(100);

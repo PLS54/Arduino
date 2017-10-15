@@ -29,11 +29,13 @@ private:
 //	IRrecv* irDetect;
 //	decode_results irIn;
 	bool remoteActive = true;
-	unsigned int lastCommand = 0;
+	unsigned long lastCommand = 0;
+	bool IsCommand(unsigned long command, unsigned long irValue);
 
 public:
 	enum blindActions {none, moveTo0, moveTo50, moveTo100, moveDown10, moveUp10, adjustDown, adjustUp, reportPosition, remoteActivated, remoteDeactivated};
 	
 	RemoteForBlinds(unsigned int irPin);
 	blindActions GetAction(unsigned long irValue);
+	void Reactivate();
 };
