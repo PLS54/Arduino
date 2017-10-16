@@ -11,12 +11,11 @@ void Blind::Move(int steps)
 	  return;
 	}
 	if (((int) (currentPosition + steps)) <= 0) {
-	MoveTo(0); 
-	return;
+		MoveTo(0); 
+		return;
 	} else if ((currentPosition + steps) >= FULL_OPEN) {
-	Serial.println("going to 100: ");
-	MoveTo(100); 
-	return;
+		MoveTo(100); 
+		return;
 	}
 	stepper->step(steps);
 	currentPosition += steps;
