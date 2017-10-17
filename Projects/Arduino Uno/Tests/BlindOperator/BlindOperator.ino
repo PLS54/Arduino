@@ -2,7 +2,6 @@
 #include <EEPROM.h>
 #include <Blind.h>
 #include <Timer.h>
-#include <IRremote.h>
 #include <RemoteForBlinds.h>
 
 #define DELAY 100
