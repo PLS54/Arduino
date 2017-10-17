@@ -26,8 +26,8 @@
 class RemoteForBlinds
 {
 private:
-//	IRrecv* irDetect;
-//	decode_results irIn;
+	IRrecv* irDetect;
+	decode_results irIn;
 	bool remoteActive = true;
 	unsigned long lastCommand = 0;
 	bool IsCommand(unsigned long command, unsigned long irValue);
@@ -36,6 +36,6 @@ public:
 	enum blindActions {none, moveTo0, moveTo50, moveTo100, moveDown10, moveUp10, adjustDown, adjustUp, reportPosition, remoteActivated, remoteDeactivated};
 	
 	RemoteForBlinds(unsigned int irPin);
-	blindActions GetAction(unsigned long irValue);
+	blindActions GetAction();
 	void Reactivate();
 };

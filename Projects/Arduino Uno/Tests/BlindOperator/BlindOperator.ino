@@ -16,15 +16,9 @@ Blind myBlind(&blindMotor);
 RemoteForBlinds myRemote(IR_PIN);
 Timer remoteInactiveTimer;
 
-  IRrecv* irDetect;
-  decode_results irIn;
-
-
 void setup()
 {
 
-  irDetect = new IRrecv(IR_PIN);
-  irDetect->enableIRIn(); // Start the Receiver
   Serial.begin(9600);
   blindMotor.setSpeed(700);   
   if (EEPROM.read(0) != 0xBE) {
@@ -40,42 +34,38 @@ void loop() {
   if (remoteInactiveTimer.IsElapse()) {
     myRemote.Reactivate();
   }
-  if (irDetect->decode(&irIn)) {
-    unsigned long irValue = irIn.value;
-    irDetect->resume(); // Receive the next value
-    switch (myRemote.GetAction(irValue)) {
-      case RemoteForBlinds::moveTo0:
-        myBlind.MoveTo(0);
-        break;
-      case RemoteForBlinds::moveTo50:
-        myBlind.MoveTo(50);
-        break;
-      case RemoteForBlinds::moveTo100:
-        myBlind.MoveTo(100);
-        break;
-      case RemoteForBlinds::moveDown10:
-        myBlind.Move(-10);
-        break;
-      case RemoteForBlinds::moveUp10:
-        myBlind.Move(10);
-        break;
-      case RemoteForBlinds::adjustDown:
-        blindMotor.step(-1);
-        break;
-      case RemoteForBlinds::adjustUp:
-        blindMotor.step(1);
-        break;
-      case RemoteForBlinds::reportPosition:
-        Serial.print("Position: ");
-        Serial.println(myBlind.GetCurrentPosition());
-        break;
-      case RemoteForBlinds::remoteDeactivated:
-        remoteInactiveTimer.Start(10000);
-        break;
-      case RemoteForBlinds::none:
-        delay(DELAY);
-        break;
-    }
+  switch (myRemote.GetAction()) {
+    case RemoteForBlinds::moveTo0:
+      myBlind.MoveTo(0);
+      break;
+    case RemoteForBlinds::moveTo50:
+      myBlind.MoveTo(50);
+      break;
+    case RemoteForBlinds::moveTo100:
+      myBlind.MoveTo(100);
+      break;
+    case RemoteForBlinds::moveDown10:
+      myBlind.Move(-10);
+      break;
+    case RemoteForBlinds::moveUp10:
+      myBlind.Move(10);
+      break;
+    case RemoteForBlinds::adjustDown:
+      blindMotor.step(-1);
+      break;
+    case RemoteForBlinds::adjustUp:
+      blindMotor.step(1);
+      break;
+    case RemoteForBlinds::reportPosition:
+      Serial.print("Position: ");
+      Serial.println(myBlind.GetCurrentPosition());
+      break;
+    case RemoteForBlinds::remoteDeactivated:
+      remoteInactiveTimer.Start(10000);
+      break;
+    case RemoteForBlinds::none:
+      delay(DELAY);
+      break;
   }
 }
 
