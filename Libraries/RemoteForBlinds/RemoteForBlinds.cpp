@@ -1,16 +1,18 @@
 #include "RemoteForBlinds.h"
 RemoteForBlinds::RemoteForBlinds(unsigned int irPin)
 {
-	irDetect = new IRrecv(irPin);
-	irDetect->enableIRIn(); // Start the Receiver
+//	irDetect = new IRrecv(irPin);
+//	irDetect->enableIRIn(); // Start the Receiver
+
 }
 
-RemoteForBlinds::blindActions RemoteForBlinds::GetAction()
+RemoteForBlinds::blindActions RemoteForBlinds::GetAction(unsigned long irValue)
 {
-  if (irDetect->decode(&irIn)) {
-	unsigned long irValue = irIn.value;
-    Serial.println(irValue, HEX);
-	irDetect->resume(); // Receive the next value
+  if (true) {
+//  if (irDetect->decode(&irIn)) {
+//	unsigned int irValue = irIn.value;
+//    Serial.println(irValue, HEX);
+ //   irDetect->resume(); // Receive the next value
     if (irValue == ENTER && lastCommand == YELLOW) {
       remoteActive = true;
 	  return remoteActivated;
