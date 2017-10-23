@@ -34,42 +34,23 @@
 #define SONY_DOUBLE_SPACE_USECS    500  // usually ssee 713 - not using ticks as get number wrapround
 #define REPEAT 0xFFFFFFFF
 
-typedef
-  enum {
-    UNKNOWN      = -1,
-    UNUSED       =  0,
-    RC5,
-    RC6,
-    NEC,
-    SONY,
-    PANASONIC,
-    JVC,
-    SAMSUNG,
-    WHYNTER,
-    AIWA_RC_T501,
-    LG,
-    SANYO,
-    MITSUBISHI,
-    DISH,
-    SHARP,
-    DENON,
-    PRONTO,
-    LEGO_PF,
-  }
-decode_type_t;
 
 class SonyIRRemoteDecoder
 {
   private:
-    decode_type_t          decode_type;  // UNKNOWN, NEC, SONY, RC5, ...
     unsigned int           address;      // Used by Panasonic & Sharp [16-bits]
     unsigned long          value;        // Decoded value [max 32-bits]
     int                    bits;         // Number of bits in decoded value
     volatile unsigned int  *rawbuf;      // Raw intervals in 50uS ticks
     int                    rawlen;       // Number of records in rawbuf
     int                    overflow;     // true iff IR raw code too long
+
+	int  Match (int measured,  int desired);
+	int  MatchMark (int measured_ticks,  int desired_us);
+	int  MatchSpace(int measured_ticks,  int desired_us);
+
   public:
 	SonyIRRemoteDecoder();
 	bool DecodeRaw(unsigned int* rawData, int rawLength);
-	unsigned int GetValue();
+	unsigned long GetValue();
 };

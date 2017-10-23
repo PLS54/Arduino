@@ -11,7 +11,7 @@
 #endif
 
 
-int  MATCH (int measured,  int desired)
+int  SonyIRRemoteDecoder::Match (int measured,  int desired)
 {
   DBG_PRINT(F("Testing: "));
   DBG_PRINT(TICKS_LOW(desired), DEC);
@@ -31,7 +31,7 @@ int  MATCH (int measured,  int desired)
 //+========================================================
 // Due to sensor lag, when received, Marks tend to be 100us too long
 //
-int  MATCH_MARK (int measured_ticks,  int desired_us)
+int  SonyIRRemoteDecoder::MatchMark (int measured_ticks,  int desired_us)
 {
   DBG_PRINT(F("Testing mark (actual vs desired): "));
   DBG_PRINT(measured_ticks * USECPERTICK, DEC);
@@ -56,7 +56,7 @@ int  MATCH_MARK (int measured_ticks,  int desired_us)
 //+========================================================
 // Due to sensor lag, when received, Spaces tend to be 100us too short
 //
-int  MATCH_SPACE (int measured_ticks,  int desired_us)
+int  SonyIRRemoteDecoder::MatchSpace(int measured_ticks,  int desired_us)
 {
   DBG_PRINT(F("Testing space (actual vs desired): "));
   DBG_PRINT(measured_ticks * USECPERTICK, DEC);
@@ -102,14 +102,7 @@ bool  SonyIRRemoteDecoder::DecodeRaw(unsigned int* rawData, int rawLength)
     // Serial.print("IR Gap found: ");
     bits = 0;
     value = REPEAT;
-
-# ifdef DECODE_SANYO
-    decode_type = SANYO;
-# else
-    decode_type = UNKNOWN;
-# endif
-
-      return true;
+	return true;
   }
   DBG_PRINT("Offset: ");
   DBG_PRINT(offset, DEC);
@@ -121,16 +114,16 @@ bool  SonyIRRemoteDecoder::DecodeRaw(unsigned int* rawData, int rawLength)
   DBG_PRINT(offset, DEC);
   DBG_PRINT(" value: ");
   DBG_PRINTLN(rawbuf[offset], DEC);
-  if (!MATCH_MARK(rawbuf[offset++], SONY_HDR_MARK))  return false ;
+  if (!MatchMark(rawbuf[offset++], SONY_HDR_MARK))  return false ;
   while (offset + 1 < rawlen) {
     DBG_PRINT("Offset: ");
     DBG_PRINT(offset, DEC);
     DBG_PRINT(" value: ");
     DBG_PRINTLN(rawbuf[offset], DEC);
-   if (!MATCH_SPACE(rawbuf[offset++], SONY_HDR_SPACE))  break ;
+   if (!MatchSpace(rawbuf[offset++], SONY_HDR_SPACE))  break ;
 
-    if      (MATCH_MARK(rawbuf[offset], SONY_ONE_MARK))   data = (data << 1) | 1 ;
-    else if (MATCH_MARK(rawbuf[offset], SONY_ZERO_MARK))  data = (data << 1) | 0 ;
+    if      (MatchMark(rawbuf[offset], SONY_ONE_MARK))   data = (data << 1) | 1 ;
+    else if (MatchMark(rawbuf[offset], SONY_ZERO_MARK))  data = (data << 1) | 0 ;
     else                                                           return false ;
     offset++;
   }
@@ -142,11 +135,10 @@ bool  SonyIRRemoteDecoder::DecodeRaw(unsigned int* rawData, int rawLength)
     return false;
   }
   value       = data;
-  decode_type = SONY;
   return true;
 }
 
-unsigned int  SonyIRRemoteDecoder::GetValue()
+unsigned long  SonyIRRemoteDecoder::GetValue()
 {
 	return value;
 }
