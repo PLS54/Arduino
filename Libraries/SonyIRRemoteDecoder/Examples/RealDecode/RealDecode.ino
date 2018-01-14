@@ -1,7 +1,7 @@
 #include <IRremote.h>
 #include <SonyIRRemoteDecoder.h>
 
-int recvPin = 13;
+int recvPin = 12;
 IRrecv irrecv(recvPin);
 SonyIRRemoteDecoder decoder;
 

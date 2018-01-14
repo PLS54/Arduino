@@ -7,7 +7,12 @@
 
 #define DELAY 100
 #define STEPS_PER_MOTOR_REVOLUTION 32   
-#define IR_PIN 13
+#define IR_PIN 12
+
+
+
+
+
 //
 //
 #define REPEAT  0xFFFFFFFF
