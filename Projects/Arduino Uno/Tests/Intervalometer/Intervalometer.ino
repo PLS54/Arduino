@@ -10,7 +10,7 @@ const int DIO = 8; //Set the DIO pin connection to the display
 #define RELAY_PIN 11
 
 
-int numToDisplay = 0;  //Variable to interate
+unsigned long numToDisplay = 0;  //Variable to interate
 uint8_t bright = 4;
 bool state = true;
 unsigned long interval = 0;
