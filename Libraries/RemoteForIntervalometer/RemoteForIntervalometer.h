@@ -26,24 +26,14 @@
 #define ZERO			0x90108
 #define MUTING			0x0140A
 
-#define MOVE_TO_0       FAST_BACKWARD
-#define START      		PLAY
-#define MOVE_TO_100     FAST_FORWARD
-#define MOVE_DOWN_10    DOWN_ARROW
-#define MOVE_UP_10      UP_ARROW
-#define ADJUST_DOWN     LEFT_ARROW
-#define ADJUST_UP       RIGHT_ARROW
-#define REPORT_POSITION RETURN
-
-
 class RemoteForIntervalometer
 {
 private:
 	unsigned long lastCommand = 0;
-	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = 0);
+	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = false);
 
 public:
-	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, start, pause, stop, brightDown, brightUp, toggleDiplay, deleteLastChar, resetDisplay};
+	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, deleteLastChar, resetDisplay};
 	
 	RemoteForIntervalometer(int i);
 	remoteActions GetAction(unsigned long irValue);

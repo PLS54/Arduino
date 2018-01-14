@@ -45,11 +45,14 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
 	if (IsCommand(YELLOW, irValue)) {
 		return deleteLastChar;
 	}
-	if (IsCommand(START, irValue)) {
+	if (IsCommand(PLAY, irValue)) {
 		return start;
 	}
 	if (IsCommand(STOP, irValue)) {
 		return stop;
+	}
+	if (IsCommand(FAST_FORWARD, irValue)) {
+		return startFast;
 	}
 	if (IsCommand(PAUSE, irValue)) {
 		return pause;
