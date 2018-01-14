@@ -10,8 +10,10 @@ Timer::Timer()
 Timer::Timer(unsigned long period)
 {
  lastTrigger = millis();
+ startTime = lastTrigger;
  autoRestart = true;
  this->period = period;
+ count = 1;
 }
 
 void Timer::Start(unsigned long period)
@@ -30,8 +32,8 @@ bool Timer::IsElapse()
   unsigned long curMillis = millis();
   if ((curMillis < lastTrigger) || ((lastTrigger + period) < curMillis)) {
 	if (autoRestart) {
-	  lastTrigger = millis();
-	  return true;	
+		lastTrigger = startTime + (period * count++);
+		return true;	
 	}
     watching = false;
     return true;

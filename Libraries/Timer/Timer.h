@@ -3,9 +3,11 @@
 class Timer{
 private:
   unsigned long lastTrigger;
+  unsigned long startTime;
   bool watching;
   bool autoRestart = false;
   unsigned long period = 0;
+  unsigned long count = 0;
 
 public:
  Timer();
