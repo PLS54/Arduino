@@ -1,5 +1,5 @@
 /*
- *  Intervalometer by PLS Version 1.1
+ *  Intervalometer by PLS Version 1.2
  */
 #include <TM1637Display.h>
 #include <Timer.h>
@@ -79,14 +79,11 @@ void loop()
               } else {
                 interval = numToDisplay * 10;
               }
-              numToDisplay = 1;
-            }
-            if (numToDisplay == 1) {
               takePicture();
-            }
-            displayState = true;
+              numToDisplay = 1;
+              intervalometer = new Timer(interval);
+            } 
             currentMode = running;
-            intervalometer = new Timer(interval);
           }
           break;
         case RemoteForIntervalometer::stop:
