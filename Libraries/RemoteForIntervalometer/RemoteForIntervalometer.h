@@ -33,7 +33,9 @@ private:
 	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = false);
 
 public:
-	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, deleteLastChar, resetDisplay};
+	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, 
+						start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, 
+						deleteLastChar, resetDisplay, takePicture, endMarker};
 	
 	RemoteForIntervalometer(int i);
 	remoteActions GetAction(unsigned long irValue);

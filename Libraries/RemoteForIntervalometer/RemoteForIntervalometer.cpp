@@ -66,6 +66,9 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
 	if (IsCommand(MUTING, irValue)) {
 		return toggleDiplay;
 	}
+	if (IsCommand(ENTER, irValue)) {
+		return takePicture;
+	}
 	return none;
 }
 

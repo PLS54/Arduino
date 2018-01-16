@@ -1,28 +1,32 @@
+/*
+ *  Intervalometer by PLS Version 1.0
+ */
 #include <TM1637Display.h>
 #include <Timer.h>
 #include <IRremote.h>
 #include <RemoteForIntervalometer.h>
 
-const int CLK = 9; //Set the CLK pin connection to the display
-const int DIO = 8; //Set the DIO pin connection to the display
-#define IR_PIN 12
-#define DELAY 100
-#define RELAY_PIN 11
+#define DIO         8    //Set the DIO pin connection to the display
+#define CLK         9   //Set the CLK pin connection to the display
+#define RELAY_PIN   10
+#define IR_PIN      11
 
+#define DELAY 100
 
 unsigned long numToDisplay = 0;  //Variable to interate
 uint8_t bright = 4;
-bool state = true;
+bool displayState = true;
 unsigned long interval = 0;
 
 TM1637Display display(CLK, DIO);  //set up the 4-Digit Display.
 RemoteForIntervalometer myRemote(1);
 Timer *intervalometer;
+Timer displayTimeout;
 IRrecv* irDetect;
 decode_results irIn;
 enum mode {input, running, paused};
 mode currentMode = input;
-bool error = false;
+bool inputError = false;
 void setup()
 {
   irDetect = new IRrecv(IR_PIN);
@@ -30,6 +34,7 @@ void setup()
   display.setBrightness(0x0);  //set the diplay to maximum brightness
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
+  displayTimeout.Start(10000);
 }
 
 
@@ -38,25 +43,32 @@ void loop()
   if (irDetect->decode(&irIn)) {
     unsigned long irValue = irIn.value;
     irDetect->resume(); // Receive the next value
-    if (myRemote.GetAction(irValue) >= RemoteForIntervalometer::one && myRemote.GetAction(irValue) <= RemoteForIntervalometer::zero && currentMode == input ) {
+    RemoteForIntervalometer::remoteActions lastRemoteAction = myRemote.GetAction(irValue);
+    if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
+      if (lastRemoteAction!= RemoteForIntervalometer::toggleDiplay) {
+        displayState = true;
+      }
+      displayTimeout.Start(60000);
+    }
+    if (lastRemoteAction >= RemoteForIntervalometer::one && lastRemoteAction <= RemoteForIntervalometer::zero && currentMode == input ) {
       if (numToDisplay <= 999) {
-        error = false;
-        if (myRemote.GetAction(irValue) == RemoteForIntervalometer::zero) {
+        inputError = false;
+        if (lastRemoteAction == RemoteForIntervalometer::zero) {
           numToDisplay *= 10;              
         } else {
-          numToDisplay = numToDisplay * 10 + myRemote.GetAction(irValue);              
+          numToDisplay = numToDisplay * 10 + lastRemoteAction;              
         }
       }
     } else {
-      switch (myRemote.GetAction(irValue)) {
+      switch (lastRemoteAction) {
         case RemoteForIntervalometer::start:
         case RemoteForIntervalometer::startFast:
           if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
             if (currentMode == input) {   
-              if (myRemote.GetAction(irValue) == RemoteForIntervalometer::startFast) {
+              if (lastRemoteAction == RemoteForIntervalometer::startFast) {
                 if (numToDisplay % 100 > 59) {
                   numToDisplay = 0;
-                  error = true;
+                  inputError = true;
                   break;
                 } else {
                   interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
@@ -64,9 +76,10 @@ void loop()
               } else {
                 interval = numToDisplay * 10;
               }
-              numToDisplay = 0;
+              numToDisplay = 1;
             }
-            state = true;
+            takePicture();
+            displayState = true;
             currentMode = running;
             intervalometer = new Timer(interval);
           }
@@ -95,7 +108,7 @@ void loop()
           }
           break;
         case RemoteForIntervalometer::toggleDiplay:
-        state = !state;
+          displayState = !displayState;
           break;
         case RemoteForIntervalometer::deleteLastChar:
           if (numToDisplay >= 10) {
@@ -107,26 +120,43 @@ void loop()
         case RemoteForIntervalometer::resetDisplay:
           numToDisplay = 0;
           break;
+        case RemoteForIntervalometer::takePicture:
+          if (currentMode != input) {
+            break;
+          }
+          display.setBrightness(bright, !displayState);  //set the diplay to maximum brightness
+          display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
+          delay(numToDisplay * 1000);
+          takePicture();
+          if (numToDisplay != 0) {
+            delay(250);
+          }
+          display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+          display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
+          break;
         case RemoteForIntervalometer::none:
           delay(DELAY);
           break;
       }
     }
   }
-  display.setBrightness(bright, state);  //set the diplay to maximum brightness
+  if (displayTimeout.IsElapse()) {
+    displayState = false;
+  }
+  display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
   if (!(numToDisplay == 0 && currentMode == input)) {
     display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
   } else {
     uint8_t data[] = {0x40, 0x40, 0x40, 0x40};
     display.setSegments(data);
   }
-  if (currentMode == paused || error) {
-    state = !state;
-    display.setBrightness(bright, state);  //set the diplay to maximum brightness
+  if (currentMode == paused || inputError) {
+    displayState = !displayState;
+    display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
     delay(500);
   }
   if (currentMode == running && intervalometer->IsElapse()) {
-    pulse();
+    takePicture();
     numToDisplay++;
   } else {
     if (currentMode != running) {
@@ -135,10 +165,11 @@ void loop()
   }
 }
 
-void pulse()
+void takePicture()
 {
   digitalWrite(RELAY_PIN, HIGH);
-  delayMicroseconds(10000);    
+  delayMicroseconds(100000);  //
+  delay(100);  
   digitalWrite(RELAY_PIN, LOW); 
 }
 
