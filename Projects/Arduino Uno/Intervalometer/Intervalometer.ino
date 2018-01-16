@@ -1,5 +1,5 @@
 /*
- *  Intervalometer by PLS Version 1.0
+ *  Intervalometer by PLS Version 1.1
  */
 #include <TM1637Display.h>
 #include <Timer.h>
@@ -45,12 +45,14 @@ void loop()
     irDetect->resume(); // Receive the next value
     RemoteForIntervalometer::remoteActions lastRemoteAction = myRemote.GetAction(irValue);
     if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
+      // Control display state timer - Reset it on a key press
       if (lastRemoteAction!= RemoteForIntervalometer::toggleDiplay) {
         displayState = true;
       }
       displayTimeout.Start(60000);
     }
     if (lastRemoteAction >= RemoteForIntervalometer::one && lastRemoteAction <= RemoteForIntervalometer::zero && currentMode == input ) {
+      // Process digit in input mode
       if (numToDisplay <= 999) {
         inputError = false;
         if (lastRemoteAction == RemoteForIntervalometer::zero) {
@@ -63,6 +65,7 @@ void loop()
       switch (lastRemoteAction) {
         case RemoteForIntervalometer::start:
         case RemoteForIntervalometer::startFast:
+          // Set snapshoot interval
           if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
             if (currentMode == input) {   
               if (lastRemoteAction == RemoteForIntervalometer::startFast) {
@@ -78,7 +81,9 @@ void loop()
               }
               numToDisplay = 1;
             }
-            takePicture();
+            if (numToDisplay == 1) {
+              takePicture();
+            }
             displayState = true;
             currentMode = running;
             intervalometer = new Timer(interval);
@@ -108,6 +113,7 @@ void loop()
           }
           break;
         case RemoteForIntervalometer::toggleDiplay:
+          // Display on / off
           displayState = !displayState;
           break;
         case RemoteForIntervalometer::deleteLastChar:
@@ -121,6 +127,7 @@ void loop()
           numToDisplay = 0;
           break;
         case RemoteForIntervalometer::takePicture:
+          // Take a snapshoot with set display delay
           if (currentMode != input) {
             break;
           }
@@ -141,21 +148,24 @@ void loop()
     }
   }
   if (displayTimeout.IsElapse()) {
+    // Turn display off
     displayState = false;
   }
   display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
   if (!(numToDisplay == 0 && currentMode == input)) {
-    display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
+    display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, currentMode == input); //Display the Variable value;
   } else {
+    // Set display to ----
     uint8_t data[] = {0x40, 0x40, 0x40, 0x40};
     display.setSegments(data);
   }
   if (currentMode == paused || inputError) {
     displayState = !displayState;
-    display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+    display.setBrightness(bright, displayState);  //set the diplay brightness and state
     delay(500);
   }
   if (currentMode == running && intervalometer->IsElapse()) {
+    // Snap picture when timer elapse
     takePicture();
     numToDisplay++;
   } else {
