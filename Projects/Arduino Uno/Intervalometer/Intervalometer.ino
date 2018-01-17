@@ -1,5 +1,5 @@
 /*
- *  Intervalometer by PLS Version 1.3
+ *  Intervalometer by PLS Version 1.4
  */
 #include <TM1637Display.h>
 #include <Timer.h>
@@ -33,8 +33,8 @@ void setup()
   irDetect->enableIRIn(); // Start the Receiver
   display.setBrightness(0x0);  //set the diplay to maximum brightness
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, HIGH); 
-  displayTimeout.Start(10000);
+  digitalWrite(RELAY_PIN, LOW); 
+  displayTimeout.Start(60000);
 }
 
 
@@ -178,10 +178,10 @@ void loop()
 
 void takePicture()
 {
-  digitalWrite(RELAY_PIN, LOW);
+  digitalWrite(RELAY_PIN, HIGH);
   delayMicroseconds(100000);  //
   delay(100);  
-  digitalWrite(RELAY_PIN, HIGH); 
+  digitalWrite(RELAY_PIN, LOW); 
 }
 
 
