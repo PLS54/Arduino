@@ -41,6 +41,7 @@ void setup()
 void loop()
 {
   if (irDetect->decode(&irIn)) {
+    Serial.println(irValue, HEX);
     unsigned long irValue = irIn.value;
     irDetect->resume(); // Receive the next value
     RemoteForIntervalometer::remoteActions lastRemoteAction = myRemote.GetAction(irValue);

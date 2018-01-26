@@ -33,13 +33,8 @@ void setup()
   irDetect->enableIRIn(); // Start the Receiver
   Serial.begin(9600);
   blindMotor.setSpeed(700);   
-  if (EEPROM.read(0) != 0xBE) {
-    EEPROM.write(0, 0xBE);
-    EEPROM.write(1, 0);
-  }
   Serial.print("Starting position: ");
-  Serial.println(EEPROM.read(1));
-  myBlind.SetPosition(EEPROM.read(1));
+  Serial.println(myBlind.GetCurrentPosition());
 }
 
 void loop() {
@@ -77,6 +72,12 @@ void loop() {
         break;
       case RemoteForBlinds::remoteDeactivated:
         remoteInactiveTimer.Start(10000);
+        break;
+      case RemoteForBlinds::setUpperLimit:
+        myBlind.SetUpperLimit();
+        break;
+      case RemoteForBlinds::resetUpperLimit:
+        myBlind.ResetUpperLimit();
         break;
       case RemoteForBlinds::none:
         delay(DELAY);

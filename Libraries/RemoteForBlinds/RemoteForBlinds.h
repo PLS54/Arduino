@@ -11,6 +11,8 @@
 #define RETURN          0xBE108
 #define YELLOW          0xE010C
 #define BLUE            0x2010C
+#define RED				0xA010C
+#define GREEN			0x6010C
 #define ENTER           0x3E108
 
 #define MOVE_TO_0       FAST_BACKWARD
@@ -33,7 +35,8 @@ private:
 	bool IsCommand(unsigned long command, unsigned long irValue);
 
 public:
-	enum blindActions {none, moveTo0, moveTo50, moveTo100, moveDown10, moveUp10, adjustDown, adjustUp, reportPosition, remoteActivated, remoteDeactivated};
+	enum blindActions {none, moveTo0, moveTo50, moveTo100, moveDown10, moveUp10, adjustDown, 
+	adjustUp, reportPosition, remoteActivated, remoteDeactivated, setUpperLimit, resetUpperLimit };
 	
 	RemoteForBlinds(unsigned int irPin);
 	blindActions GetAction(unsigned long irValue);

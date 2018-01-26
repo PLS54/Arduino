@@ -46,6 +46,12 @@ RemoteForBlinds::blindActions RemoteForBlinds::GetAction(unsigned long irValue)
 		if (irValue == MOVE_TO_100) {
 		  return moveTo100;
 		}
+		if (irValue == RED) {
+			return setUpperLimit;
+		}
+		if (irValue == GREEN) {
+			return resetUpperLimit;
+		}
     }
     if (irValue == REPORT_POSITION) {
 		return reportPosition;
