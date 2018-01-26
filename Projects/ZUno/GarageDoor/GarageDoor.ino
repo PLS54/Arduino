@@ -1,5 +1,5 @@
 //
-// Garage door opener 2.1
+// Garage door opener 2.2
 //
 #include <Timer.h>
 
@@ -9,7 +9,7 @@
 #define LOOP_DELAY 500
 #define DOOR_OPEN_TIME 15000
 #define PULSE_WIDTH 200
-#define CLOSE_DISTANCE 10.0
+#define CLOSE_DISTANCE 5.0
 #define REPORT_TIME 300000
 
 
