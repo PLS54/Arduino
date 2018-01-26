@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <IRremote.h>
 
-#define FAST_BACKWARD   0xCC108
+/*#define FAST_BACKWARD   0xCC108
 #define PLAY            0x0200B
 #define PAUSE           0x0400B
 #define STOP            0x0000B
@@ -25,6 +25,32 @@
 #define NINE			0x10108
 #define ZERO			0x90108
 #define MUTING			0x0140A
+*/
+#define FAST_BACKWARD   0x36293A
+#define PLAY            0x37990C
+#define PAUSE           0x374117
+#define STOP            0x365934
+#define FAST_FORWARD    0x36293A
+#define DOWN_ARROW      0x37A10B
+#define UP_ARROW        0x36812F
+#define LEFT_ARROW      0x37810F
+#define RIGHT_ARROW     0x364137
+#define ENTER          0x366133
+#define YELLOW          0x37E902
+#define BLUE            0x36193C
+#define RETURN           0x36E123
+#define ONE				0x36113D
+#define TWO				0x37111D
+#define THREE			0x36912D
+#define FOUR			0x37910D
+#define FIVE			0x365135
+#define SIX				0x375115
+#define SEVEN			0x36D125
+#define EIGHT			0x37D105
+#define NINE			0x363139
+#define ZERO			0x373119
+#define MUTING			0x36F920 // MENU
+
 
 class RemoteForIntervalometer
 {

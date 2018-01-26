@@ -1,5 +1,5 @@
 /*
- *  Intervalometer by PLS Version 1.4
+ *  Intervalometer by PLS Version 1.5
  */
 #include <TM1637Display.h>
 #include <Timer.h>
@@ -41,7 +41,6 @@ void setup()
 void loop()
 {
   if (irDetect->decode(&irIn)) {
-    Serial.println(irValue, HEX);
     unsigned long irValue = irIn.value;
     irDetect->resume(); // Receive the next value
     RemoteForIntervalometer::remoteActions lastRemoteAction = myRemote.GetAction(irValue);
