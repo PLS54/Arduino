@@ -1,5 +1,5 @@
 /*
- *  Intervalometer by PLS Version 1.6
+ *  Intervalometer by PLS Version 1.7
  */
 #include <TM1637Display.h>
 #include <Timer.h>
@@ -22,13 +22,17 @@ TM1637Display display(CLK, DIO);  //set up the 4-Digit Display.
 RemoteForIntervalometer myRemote(1);
 Timer *intervalometer;
 Timer displayTimeout;
+Timer flashTimer(500);
 IRrecv* irDetect;
 decode_results irIn;
-enum mode {input, running, paused};
+enum mode {initial, input, instant, running, paused};
 mode currentMode = input;
 bool inputError = false;
+unsigned int previousDisplay = 0;
+
 void setup()
 {
+  Serial.begin(9600);
   irDetect = new IRrecv(IR_PIN);
   irDetect->enableIRIn(); // Start the Receiver
   display.setBrightness(0x0);  //set the diplay to maximum brightness
@@ -46,7 +50,7 @@ void loop()
     RemoteForIntervalometer::remoteActions lastRemoteAction = myRemote.GetAction(irValue);
     if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
       // Control display state timer - Reset it on a key press
-      if (lastRemoteAction!= RemoteForIntervalometer::toggleDiplay) {
+      if (lastRemoteAction != RemoteForIntervalometer::toggleDiplay) {
         displayState = true;
       }
       displayTimeout.Start(60000);
@@ -87,7 +91,7 @@ void loop()
           }
           break;
         case RemoteForIntervalometer::stop:
-          if (currentMode == running || currentMode == paused) {
+          if (currentMode == running || currentMode == paused || currentMode == instant) {
             currentMode = input;
             numToDisplay = 0;
           }
@@ -95,6 +99,7 @@ void loop()
         case RemoteForIntervalometer::pause:
           if (currentMode == running) {
             currentMode = paused;
+            flashTimer.StartAuto(500);
           }
           break;
         case RemoteForIntervalometer::brightDown:
@@ -130,19 +135,19 @@ void loop()
           numToDisplay = 0;
           break;
         case RemoteForIntervalometer::takePicture:
-          // Take a snapshoot with set display delay
-          if (currentMode != input) {
-            break;
+          if (currentMode == input) {
+            currentMode = instant;
+            intervalometer = NULL; 
+            if (numToDisplay > 0) {
+              previousDisplay = numToDisplay;
+              interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
+              flashTimer.StartAuto(500);
+              intervalometer = new Timer(interval - 100);
+              displayState = !displayState;
+              display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+              DisplayValue(display, numToDisplay, currentMode);
+            }
           }
-          display.setBrightness(bright, !displayState);  //set the diplay to maximum brightness
-          display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
-          delay(numToDisplay * 1000);
-          takePicture();
-          if (numToDisplay != 0) {
-            delay(250);
-          }
-          display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
-          display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, true); //Display the Variable value;
           break;
         case RemoteForIntervalometer::none:
           delay(DELAY);
@@ -155,17 +160,13 @@ void loop()
     displayState = false;
   }
   display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
-  if (!(numToDisplay == 0 && currentMode == input)) {
-    display.showNumberDecEx(numToDisplay, currentMode == input ? 0xFF : 0x00, currentMode == input); //Display the Variable value;
-  } else {
-    // Set display to ----
-    uint8_t data[] = {0x40, 0x40, 0x40, 0x40};
-    display.setSegments(data);
-  }
+  DisplayValue(display, numToDisplay, currentMode);
   if (currentMode == paused || inputError) {
-    displayState = !displayState;
-    display.setBrightness(bright, displayState);  //set the diplay brightness and state
-    delay(500);
+    if (flashTimer.IsElapse()) {
+      displayState = !displayState;
+      display.setBrightness(bright, displayState);  //set the diplay brightness and state
+      delay(100);
+    }
   }
   bool timerElapse = false;
   if (intervalometer != NULL) {
@@ -175,10 +176,37 @@ void loop()
     // Snap picture when timer elapse
     takePicture();
     numToDisplay++;
+  } else if (currentMode == instant) {
+    if (intervalometer == NULL) {
+      display.setBrightness(bright, !displayState);  //set the diplay to maximum brightness
+      takePicture();
+      display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+      currentMode = input;
+    } else {
+      if (timerElapse) {
+        displayState = true;
+        display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+        DisplayValue(display, 0, currentMode);
+        delay(100);
+        takePicture();
+        currentMode = input;
+        numToDisplay = previousDisplay;
+        DisplayValue(display, numToDisplay, currentMode);
+      } else {
+        numToDisplay = intervalometer->GetTimeLeftBeforeTrigger() / 1000 + 1;
+        DisplayValue(display, numToDisplay, currentMode);
+        display.showNumberDecEx(numToDisplay, ((currentMode == input) || (currentMode== instant)) ? 0xFF : 0x00, true); //Display the Variable value;
+      }
+      if (flashTimer.IsElapse() && !timerElapse) {
+        displayState = !displayState;
+        display.setBrightness(bright, displayState);  //set the diplay to maximum brightness
+        DisplayValue(display, numToDisplay, currentMode);
+      }
+    }
   } else {
     if (currentMode != running) {
-      delay(100);
-    }
+    delay(100);
+   }
   }
 }
 
@@ -190,4 +218,19 @@ void takePicture()
   digitalWrite(RELAY_PIN, LOW); 
 }
 
+mode lastMode = initial;
+int lastValue = -1;
+void DisplayValue(TM1637Display theDisplay, int value, mode currentMode)
+{
+  if ((lastValue == value) && lastMode == currentMode) {
+    return;
+  }
+  if (!(value == 0 && currentMode == input)) {
+    display.showNumberDecEx(value, ((currentMode == input) || (currentMode== instant)) ? 0xFF : 0x00, currentMode != running && currentMode != paused); //Display the Variable value;
+  } else {
+    // Set display to ----
+    uint8_t data[] = {0x40, 0x40, 0x40, 0x40};
+    display.setSegments(data);
+  }
+}
 

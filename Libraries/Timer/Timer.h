@@ -13,6 +13,8 @@ public:
  Timer();
  Timer(unsigned long period);
  void Start(unsigned long period);
+ void StartAuto(unsigned long period);
  bool IsElapse();
+ unsigned long GetTimeLeftBeforeTrigger();
 };
 
