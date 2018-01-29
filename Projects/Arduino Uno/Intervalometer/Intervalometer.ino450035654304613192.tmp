@@ -20,7 +20,7 @@ unsigned long interval = 0;
 
 RemoteForIntervalometer myRemote(1);
 DisplayForIntervalometer myDisplay(CLK, DIO);
-Timer intervalometer;
+Timer *intervalometer;
 Timer displayTimeout;
 Timer flashTimer(500);
 IRrecv* irDetect;
@@ -89,7 +89,7 @@ void loop()
               }
               takePicture();
               numToDisplay = 1;
-              intervalometer.StartAuto(interval);
+              intervalometer = new Timer(interval);
               myDisplay.ChangeMode(DisplayForIntervalometer::count);
               myDisplay.SetNewValue(numToDisplay);
             } 
@@ -100,8 +100,6 @@ void loop()
           if (currentMode == running || currentMode == paused || currentMode == instant) {
             currentMode = input;
             numToDisplay = 0;
-            myDisplay.ChangeMode(DisplayForIntervalometer::input);
-            myDisplay.SetNewValue(numToDisplay);
           }
           displayTimeout.Stop();
           break;
@@ -129,27 +127,25 @@ void loop()
           } else {
             numToDisplay = 0;
           }
-          myDisplay.SetNewValue(numToDisplay);
           break;
-        myDisplay.SetNewValue(numToDisplay);
         case RemoteForIntervalometer::resetDisplay:
           if (currentMode != input) {
             break;
           }
           numToDisplay = 0;
-          myDisplay.SetNewValue(numToDisplay);
           break;
         case RemoteForIntervalometer::takePicture:
           displayTimeout.Stop();
           if (currentMode == input) {
             currentMode = instant;
-            intervalometer.Stop();
+            intervalometer = NULL; 
             if (numToDisplay > 0) {
               previousDisplay = numToDisplay;
               interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
               flashTimer.StartAuto(500);
-              intervalometer.StartAuto(interval - 100);
+              intervalometer = new Timer(interval - 100);
               myDisplay.ChangeMode(DisplayForIntervalometer::time);
+              myDisplay.ToggleDisplayState();
               myDisplay.SetNewValue(numToDisplay);
             }
           }
@@ -161,20 +157,45 @@ void loop()
     }
   }
   if (displayTimeout.IsElapse()) {
-    //myDisplay.TurnDisplayOff();
+    myDisplay.TurnDisplayOff();
   }
   if (currentMode == paused || inputError) {
     if (flashTimer.IsElapse()) {
       myDisplay.ToggleDisplayState();
     }
   }
-  if (currentMode == running && intervalometer.IsElapse()) {
+  bool timerElapse = false;
+  if (intervalometer != NULL) {
+    timerElapse = intervalometer->IsElapse();
+  }
+  if (currentMode == running && timerElapse) {
     // Snap picture when timer elapse
     takePicture();
     numToDisplay++;
-    myDisplay.SetNewValue(numToDisplay);
   } else if (currentMode == instant) {
-    ProcessIntantMode();
+    if (intervalometer == NULL) {
+      myDisplay.ToggleDisplayState();
+      takePicture();
+      myDisplay.ToggleDisplayState();
+      currentMode = input;
+    } else {
+      if (timerElapse) {
+        myDisplay.TurnDisplayOn();
+        myDisplay.SetNewValue(0);
+        delay(100);
+        takePicture();
+        currentMode = input;
+        numToDisplay = previousDisplay;
+        myDisplay.SetNewValue(numToDisplay);
+      } else {
+        numToDisplay = intervalometer->GetTimeLeftBeforeTrigger() / 1000 + 1;
+        myDisplay.SetNewValue(numToDisplay);
+      }
+      if (flashTimer.IsElapse() && !timerElapse) {
+        myDisplay.ToggleDisplayState();
+        myDisplay.SetNewValue(numToDisplay);
+      }
+    }
   } else {
     if (currentMode != running) {
       delay(100);
@@ -182,12 +203,6 @@ void loop()
   }
   if (currentMode == input) {
     myDisplay.ChangeMode(DisplayForIntervalometer::input);
-  }
-  if (currentMode == instant) {
-    myDisplay.ChangeMode(DisplayForIntervalometer::time);
-  }
-  if (currentMode == running) {
-    myDisplay.ChangeMode(DisplayForIntervalometer::count);
   }
 }
 
@@ -199,29 +214,4 @@ void takePicture()
   digitalWrite(RELAY_PIN, LOW); 
 }
 
-void ProcessIntantMode()
-{
-  if (!intervalometer.Running()) {
-    myDisplay.ToggleDisplayState();
-    takePicture();
-    myDisplay.ToggleDisplayState();
-    currentMode = input;
-  } else {
-    if (intervalometer.IsElapse()) {
-      myDisplay.TurnDisplayOn();
-      myDisplay.SetNewValue(0);
-      delay(100);
-      takePicture();  
-      currentMode = input;
-      numToDisplay = previousDisplay;
-      myDisplay.SetNewValue(numToDisplay);
-    } else {
-      numToDisplay = intervalometer.GetTimeLeftBeforeTrigger() / 1000 + 1;
-      myDisplay.SetNewValue(numToDisplay);
-    }
-    if (flashTimer.IsElapse() && !intervalometer.IsElapse()) {
-      myDisplay.ToggleDisplayState();
-    }
-  }
-}
 

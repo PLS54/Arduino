@@ -16,5 +16,8 @@ public:
  void StartAuto(unsigned long period);
  bool IsElapse();
  unsigned long GetTimeLeftBeforeTrigger();
+ void Stop();
+ void Restart();
+ bool Running();
 };
 

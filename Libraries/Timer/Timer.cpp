@@ -27,6 +27,20 @@ void Timer::StartAuto(unsigned long period)
 	this->period = period;
 	count = 1;
 }
+void Timer::Stop()
+{
+	watching = false;
+	autoRestart = false;
+}
+void Timer::Restart()
+{
+	lastTrigger = millis();
+}
+
+bool:: Timer::Running()
+{
+	return watching || autoRestart;
+}
 
 bool Timer::IsElapse()
 {
