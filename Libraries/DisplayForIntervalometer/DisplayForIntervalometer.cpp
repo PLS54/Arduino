@@ -1,5 +1,10 @@
 #include <DisplayForIntervalometer.h>
 
+DisplayForIntervalometer::DisplayForIntervalometer()
+{
+	
+}
+
 DisplayForIntervalometer::DisplayForIntervalometer(uint8_t pinClock, uint8_t pinIO)
 {
 	Serial.begin(9600);

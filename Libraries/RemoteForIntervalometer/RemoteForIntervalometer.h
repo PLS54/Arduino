@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <IRremote.h>
+#include <Timer.h>
+#include <DisplayForIntervalometer.h>
 
 /*#define FAST_BACKWARD   0xCC108
 #define PLAY            0x0200B
@@ -54,15 +56,34 @@
 
 class RemoteForIntervalometer
 {
-private:
+public:
+	enum mode {initial, input, instant, running, paused};
+
+	private:
 	unsigned long lastCommand = 0;
 	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = false);
 
-public:
+	IRrecv* irDetect;
+	decode_results irIn;
+
+
+	Timer& intervalTimer;
+	Timer& displayTimeout;
+	DisplayForIntervalometer display;
+
 	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, 
 						start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, 
 						deleteLastChar, resetDisplay, takePicture, endMarker};
-	
-	RemoteForIntervalometer(int i);
+
+	mode currentMode = input;
+	bool inputError = false;
+	unsigned int previousDisplay = 0;
+
+	unsigned long numToDisplay = 0;  //Variable to interate
+	unsigned long interval = 0;
+
+public:
+	RemoteForIntervalometer(uint8_t irPin, Timer& intervalometerTimer, Timer& displayTimeout, DisplayForIntervalometer& display);
 	remoteActions GetAction(unsigned long irValue);
+	void ProcessRemoteInput();
 };

@@ -1,3 +1,6 @@
+#ifndef DisplayForIntervalometer_h
+#define DisplayForIntervalometer_h
+
 #include <Arduino.h>
 #include <TM1637Display.h>
 
@@ -6,7 +9,7 @@ class DisplayForIntervalometer
 	public:
 
 		enum mode {input, time, count};
-
+		DisplayForIntervalometer();
 		DisplayForIntervalometer(uint8_t pinClock, uint8_t pinIO);
 
 		void ToggleDisplayState();
@@ -27,3 +30,4 @@ class DisplayForIntervalometer
 	
 		void DisplayValue();
 };
+#endif
