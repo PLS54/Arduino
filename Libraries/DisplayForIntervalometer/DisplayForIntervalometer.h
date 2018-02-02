@@ -16,6 +16,7 @@ class DisplayForIntervalometer
 		void TurnDisplayOff();
 		void TurnDisplayOn();
 		void SetNewValue(int newValue);
+		int GetCurrentValue();
 		void IncreaseBrighness();
 		void DecreaseBrighness();
 		void ChangeMode(mode newMode);

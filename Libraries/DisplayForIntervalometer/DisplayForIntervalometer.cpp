@@ -7,7 +7,6 @@ DisplayForIntervalometer::DisplayForIntervalometer()
 
 DisplayForIntervalometer::DisplayForIntervalometer(uint8_t pinClock, uint8_t pinIO)
 {
-	Serial.begin(9600);
 	display = new TM1637Display(pinClock, pinIO);
 	display->setBrightness(brightness, displayState);  
 	DisplayValue();
@@ -16,8 +15,6 @@ DisplayForIntervalometer::DisplayForIntervalometer(uint8_t pinClock, uint8_t pin
 void DisplayForIntervalometer::ToggleDisplayState()
 {
 	displayState = !displayState;
-	Serial.print("In toggle DisplayState: ");
-	Serial.println(displayState);
 	display->setBrightness(brightness, displayState);  
 	DisplayValue();
 }
@@ -25,7 +22,6 @@ void DisplayForIntervalometer::ToggleDisplayState()
 void DisplayForIntervalometer::TurnDisplayOff()
 {
 	if (displayState == true) {
-		Serial.println("Turn display off ");
 		displayState = false;
 		display->setBrightness(brightness, displayState);  
 		DisplayValue();
@@ -35,7 +31,6 @@ void DisplayForIntervalometer::TurnDisplayOff()
 void DisplayForIntervalometer::TurnDisplayOn()
 {
 	if (displayState == false) {
-		Serial.println("Turn display on ");
 		displayState = true;
 		display->setBrightness(brightness, displayState);  
 		DisplayValue();
@@ -45,11 +40,14 @@ void DisplayForIntervalometer::TurnDisplayOn()
 void DisplayForIntervalometer::SetNewValue(int newValue)
 {
 	if(newValue != value) {
-		Serial.print("New value: ");
-		Serial.println(newValue);
 		value = newValue;
 		DisplayValue();
 	}
+}
+
+int DisplayForIntervalometer::GetCurrentValue()
+{
+	return value;
 }
 
 void DisplayForIntervalometer::IncreaseBrighness()
@@ -73,8 +71,6 @@ void DisplayForIntervalometer::DecreaseBrighness()
 void DisplayForIntervalometer::ChangeMode(mode newMode)
 {
 	if( newMode != theMode) {
-		Serial.print("New Mode: ");
-		Serial.println(newMode);
 		theMode = newMode;
 		TurnDisplayOn();
 		DisplayValue();
@@ -84,8 +80,6 @@ void DisplayForIntervalometer::ChangeMode(mode newMode)
 void DisplayForIntervalometer::DisplayValue()
 {
 	
-	Serial.print("   In DisplayValue: ");
-	Serial.println(value);
 	if (!(value == 0 && theMode == input)) {
 		int toDisplay = value;
 		if (theMode == time) {

@@ -3,7 +3,7 @@
 Timer::Timer()
 {
 	lastTrigger = millis();
-	watching = false;;
+	running = false;;
 	autoRestart = false;
 }
 
@@ -15,37 +15,40 @@ Timer::Timer(unsigned long period)
 void Timer::Start(unsigned long period)
 {
 	lastTrigger = millis();
-	watching = true;
+	running = true;
 	autoRestart = false;
 	this->period = period;
 }
+
 void Timer::StartAuto(unsigned long period)
 {
 	lastTrigger = millis();
 	startTime = lastTrigger;
 	autoRestart = true;
 	this->period = period;
+	running = true;
 	count = 1;
 }
+
 void Timer::Stop()
 {
-	watching = false;
-	autoRestart = false;
+	running = false;
 }
+
 void Timer::Restart()
 {
-	lastTrigger = millis();
+	StartAuto(this->period);
 }
 
 bool:: Timer::Running()
 {
-	return watching || autoRestart;
+	return running;
 }
 
 bool Timer::IsElapse()
 {
-	if (!watching && !autoRestart) {
-		return true;
+	if (!running && !autoRestart) {
+		return false;
 	}
 	unsigned long curMillis = millis();
 	if ((curMillis < lastTrigger) || ((lastTrigger + period) < curMillis)) {
@@ -53,7 +56,7 @@ bool Timer::IsElapse()
 			lastTrigger = startTime + (period * count++);
 			return true;	
 		}
-		watching = false;
+		running = false;
 		return true;
 	}
 	return false;

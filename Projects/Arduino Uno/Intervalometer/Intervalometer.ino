@@ -5,66 +5,19 @@
 #include <RemoteForIntervalometer.h>
 #include <DisplayForIntervalometer.h>
 
-#define DIO         8    //Set the DIO pin connection to the display
-#define CLK         9   //Set the CLK pin connection to the display
-#define RELAY_PIN   10
-#define IR_PIN      11
+#define DIO               8    //Set the DIO pin connection to the display
+#define CLK               9   //Set the CLK pin connection to the display
+#define RELAY_PIN         10
+#define IR_PIN            11
+#define LOOP_DELAY        100
+#define DISPLAY_TIMEOUT   60000
+#define FLASHES           250
 
-#define DELAY 100
-
-
-Timer intervalTimer;
-Timer displayTimeout;
-Timer flashTimer(500);
-DisplayForIntervalometer myDisplay(CLK, DIO);
-RemoteForIntervalometer myRemote(IR_PIN, intervalTimer, displayTimeout, myDisplay);
-
-
-
-void setup()
-{
-  Serial.begin(9600);
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); 
-  displayTimeout.Start(60000);
-}
-
-
-void loop()
-{
- 
-    myRemote.ProcessRemoteInput();
-/*  if (displayTimeout.IsElapse()) {
-    //myDisplay.TurnDisplayOff();
-  }
-  if (currentMode == paused || inputError) {
-    if (flashTimer.IsElapse()) {
-      myDisplay.ToggleDisplayState();
-    }
-  }
-  if (currentMode == running && intervalTimer.IsElapse()) {
-    // Snap picture when timer elapse
-    takePicture();
-    numToDisplay++;
-    myDisplay.SetNewValue(numToDisplay);
-  } else if (currentMode == instant) {
-    ProcessIntantMode();
-  } else {
-    if (currentMode != running) {
-      delay(100);
-    }
-  }
-  if (currentMode == input) {
-    myDisplay.ChangeMode(DisplayForintervalTimer::input);
-  }
-  if (currentMode == instant) {
-    myDisplay.ChangeMode(DisplayForintervalTimer::time);
-  }
-  if (currentMode == running) {
-    myDisplay.ChangeMode(DisplayForintervalTimer::count);
-  }
-*/
-}
+Timer* intervalTimer;
+Timer* displayTimeout;
+Timer* flashTimer(500);
+DisplayForIntervalometer* myDisplay;
+RemoteForIntervalometer* myRemote;
 
 void takePicture()
 {
@@ -74,29 +27,70 @@ void takePicture()
   digitalWrite(RELAY_PIN, LOW); 
 }
 
+void setup()
+{
+  //Serial.begin(9600);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW); 
+
+  intervalTimer = new Timer();
+  displayTimeout = new Timer();
+  displayTimeout->Start(DISPLAY_TIMEOUT);
+  flashTimer = new Timer(FLASHES);
+  myDisplay = new DisplayForIntervalometer(CLK, DIO);
+  myRemote = new RemoteForIntervalometer(IR_PIN, intervalTimer, displayTimeout, flashTimer, myDisplay, takePicture);
+  //
+  // Even if this is not used here it must be done for the class RemoteForIntervalometer to work wirh IR receiver
+  //
+  IRrecv irDetect(IR_PIN);
+  irDetect.enableIRIn(); // Start the Receiver
+}
+
+void loop()
+{
+  if (!myRemote->ProcessRemoteInput()) {
+      delay(LOOP_DELAY);
+  }
+  if ( intervalTimer->IsElapse() && myRemote->GetCurrentMode() == RemoteForIntervalometer::running) {
+    // Snap picture when timer elapse
+    takePicture();
+    myDisplay->SetNewValue(myDisplay->GetCurrentValue() + 1);
+  } else if (myRemote->GetCurrentMode() == RemoteForIntervalometer::instant) {
+    ProcessIntantMode();
+  } else {
+    if (myRemote->GetCurrentMode() != RemoteForIntervalometer::running) {
+      delay(LOOP_DELAY);
+    }
+  }
+}
+
+
 void ProcessIntantMode()
 {
-  if (!intervalTimer.Running()) {
-    myDisplay.ToggleDisplayState();
+  if (!intervalTimer->Running()) {
+    myDisplay->ToggleDisplayState();
     takePicture();
-    myDisplay.ToggleDisplayState();
-    //**currentMode = input;
+    myDisplay->ToggleDisplayState();
+    myRemote->SetNewMode(RemoteForIntervalometer::input);
   } else {
-    if (intervalTimer.IsElapse()) {
-      myDisplay.TurnDisplayOn();
-      myDisplay.SetNewValue(0);
-      delay(100);
+    bool timerState = intervalTimer->IsElapse();
+    if (timerState) {
+      myDisplay->TurnDisplayOn();
+      myDisplay->SetNewValue(0);
       takePicture();  
-      //**currentMode = input;
-//**      numToDisplay = previousDisplay;
-//**      myDisplay.SetNewValue(numToDisplay);
+      myRemote->SetNewMode(RemoteForIntervalometer::input);
+      myRemote->ResetToPreviousTime();
+      intervalTimer->Stop();
     } else {
-      int numToDisplay = intervalTimer.GetTimeLeftBeforeTrigger() / 1000 + 1;
-      myDisplay.SetNewValue(numToDisplay);
+      int numToDisplay = intervalTimer->GetTimeLeftBeforeTrigger() / 1000 + 1;
+      myDisplay->SetNewValue(numToDisplay);
     }
-    if (flashTimer.IsElapse() && !intervalTimer.IsElapse()) {
-      myDisplay.ToggleDisplayState();
+    if (flashTimer->IsElapse() && !timerState) {
+      myDisplay->ToggleDisplayState();
     }
+  }
+  if (myRemote->GetCurrentMode() == RemoteForIntervalometer::input) {
+    myDisplay->ChangeMode(DisplayForIntervalometer::input);
   }
 }
 

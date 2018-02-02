@@ -2,8 +2,10 @@
 #include <IRremote.h>
 #include <Timer.h>
 #include <DisplayForIntervalometer.h>
-
-/*#define FAST_BACKWARD   0xCC108
+//
+// Sony
+//
+#define FAST_BACKWARD   0xCC108
 #define PLAY            0x0200B
 #define PAUSE           0x0400B
 #define STOP            0x0000B
@@ -27,8 +29,11 @@
 #define NINE			0x10108
 #define ZERO			0x90108
 #define MUTING			0x0140A
-*/
-#define FAST_BACKWARD   0x36293A
+/*
+//
+// Videotron
+//
+#define#define FAST_BACKWARD   0x36293A
 #define PLAY            0x37990C
 #define PAUSE           0x374117
 #define STOP            0x365934
@@ -52,7 +57,7 @@
 #define NINE			0x363139
 #define ZERO			0x373119
 #define MUTING			0x36F920 // MENU
-
+*/
 
 class RemoteForIntervalometer
 {
@@ -63,27 +68,32 @@ public:
 	unsigned long lastCommand = 0;
 	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = false);
 
+	Timer* intervalTimer;
+	Timer* displayTimeout;
+	Timer* flashTimer;
+	DisplayForIntervalometer* display;
+	void (*callTakePicture)();
 	IRrecv* irDetect;
 	decode_results irIn;
 
-
-	Timer& intervalTimer;
-	Timer& displayTimeout;
-	DisplayForIntervalometer display;
-
+	
 	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, 
 						start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, 
 						deleteLastChar, resetDisplay, takePicture, endMarker};
 
 	mode currentMode = input;
 	bool inputError = false;
-	unsigned int previousDisplay = 0;
+	unsigned int previousTime = 0;
 
 	unsigned long numToDisplay = 0;  //Variable to interate
 	unsigned long interval = 0;
+	remoteActions GetAction(unsigned long irValue);
 
 public:
-	RemoteForIntervalometer(uint8_t irPin, Timer& intervalometerTimer, Timer& displayTimeout, DisplayForIntervalometer& display);
-	remoteActions GetAction(unsigned long irValue);
-	void ProcessRemoteInput();
+	RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalometerTimer, Timer* pDisplayTimeout, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*caLLtakePicture)());
+	bool ProcessRemoteInput();
+	RemoteForIntervalometer::mode GetCurrentMode();
+	void SetNewMode(RemoteForIntervalometer::mode newMode);
+	bool GetInputError();
+	void ResetToPreviousTime();
 };

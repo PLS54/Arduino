@@ -1,26 +1,37 @@
+
 #include "RemoteForIntervalometer.h"
 
-RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer& intervalTimer, Timer& displayTimeout, DisplayForIntervalometer& display)
+RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalTimer, Timer* pDisplayTimeout, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*callTakePicture)() )
 {
-	this->intervalTimer = intervalTimer;
-	this->displayTimeout = displayTimeout;
-	this->display = display;
+	intervalTimer = pIntervalTimer;
+	displayTimeout = pDisplayTimeout;
+	flashTimer = pFlashTimer;
+	display = pDisplay;
+	this->callTakePicture = callTakePicture;
 	irDetect = new IRrecv(irPin);
 	irDetect->enableIRIn(); // Start the Receiver
 }
 
-void RemoteForIntervalometer::ProcessRemoteInput()
+bool RemoteForIntervalometer::ProcessRemoteInput()
 {
+	if (displayTimeout->IsElapse()) {
+		display->TurnDisplayOff();
+	}
+	if (GetCurrentMode() == RemoteForIntervalometer::paused || GetInputError()) {
+		if (flashTimer->IsElapse()) {
+			display->ToggleDisplayState();
+		}
+	}
 	if (irDetect->decode(&irIn)) {
 		unsigned long irValue = irIn.value;
 		irDetect->resume(); // Receive the next value
-		remoteActions lastRemoteAction = GetAction(1);
+		remoteActions lastRemoteAction = GetAction(irValue);
 		if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
 			// Control display state timer - Reset it on a key press
 			if (lastRemoteAction != RemoteForIntervalometer::toggleDiplay) {
-				display.TurnDisplayOn();
+				display->TurnDisplayOn();
 			}
-			displayTimeout.Restart();
+			displayTimeout->Restart();
 		}
 		if (lastRemoteAction >= RemoteForIntervalometer::one && lastRemoteAction <= RemoteForIntervalometer::zero && currentMode == input ) {
 			// Process digit in input mode
@@ -32,101 +43,127 @@ void RemoteForIntervalometer::ProcessRemoteInput()
 					numToDisplay = numToDisplay * 10 + lastRemoteAction;              
 				}
 			}
-			display.ChangeMode(DisplayForIntervalometer::input);
-			display.SetNewValue(numToDisplay);
+			display->ChangeMode(DisplayForIntervalometer::input);
+			display->SetNewValue(numToDisplay);
 		} else {
-		switch (lastRemoteAction) {
-			case RemoteForIntervalometer::start:
-			case RemoteForIntervalometer::startFast:
-				// Set snapshoot interval
-				if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
-					displayTimeout.Start(60000);
-					if (currentMode == input) {   
-						if (lastRemoteAction == RemoteForIntervalometer::startFast) {
-							if (numToDisplay % 100 > 59) {
-								numToDisplay = 0;
-								inputError = true;
-								break;
+			switch (lastRemoteAction) {
+				case RemoteForIntervalometer::start:
+				case RemoteForIntervalometer::startFast:
+					// Set snapshoot interval
+					if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
+						displayTimeout->Restart();
+						if (currentMode == input) {   
+							if (lastRemoteAction == RemoteForIntervalometer::startFast) {
+								if (numToDisplay % 100 > 59) {
+									inputError = true;
+									break;
+								} else {
+								  interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
+								}
 							} else {
-							  interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
+								interval = numToDisplay * 10;
 							}
-						} else {
-							interval = numToDisplay * 10;
-						}
-						//**takePicture();
-						numToDisplay = 1;
-						this->intervalTimer.StartAuto(interval);
-						display.ChangeMode(DisplayForIntervalometer::count);
-						display.SetNewValue(numToDisplay);
-					} 
-					currentMode = running;
-				}
-				break;
-			case RemoteForIntervalometer::stop:
-				if (currentMode == running || currentMode == paused || currentMode == instant) {
-					currentMode = input;
-					numToDisplay = 0;
-					display.ChangeMode(DisplayForIntervalometer::input);
-					display.SetNewValue(numToDisplay);
-				}
-				displayTimeout.Stop();
-				break;
-			case RemoteForIntervalometer::pause:
-				if (currentMode == running) {
-					currentMode = paused;
-					//**flashTimer.StartAuto(500);
-				}
-			break;
-			case RemoteForIntervalometer::brightDown:
-				display.DecreaseBrighness();
-				break;
-			case RemoteForIntervalometer::brightUp:
-				display.IncreaseBrighness();
-				break;
-			case RemoteForIntervalometer::toggleDiplay:
-				display.ToggleDisplayState();
-				break;
-			case RemoteForIntervalometer::deleteLastChar:
-				if (currentMode != input) {
-					break;
-				}
-				if (numToDisplay >= 10) {
-					numToDisplay /= 10;
-				} else {
-					numToDisplay = 0;
-				}
-				display.SetNewValue(numToDisplay);
-				break;
-				display.SetNewValue(numToDisplay);
-			case RemoteForIntervalometer::resetDisplay:
-				if (currentMode != input) {
-					break;
-				}
-				numToDisplay = 0;
-				display.SetNewValue(numToDisplay);
-				break;
-			case RemoteForIntervalometer::takePicture:
-				displayTimeout.Stop();
-				if (currentMode == input) {
-					currentMode = instant;
-					intervalTimer.Stop();
-					if (numToDisplay > 0) {
-						previousDisplay = numToDisplay;
-						interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
-						//** flashTimer.StartAuto(500);
-						intervalTimer.StartAuto(interval - 100);
-						display.ChangeMode(DisplayForIntervalometer::time);
-						display.SetNewValue(numToDisplay);
+							(*callTakePicture)();
+							numToDisplay = 1;
+							intervalTimer->StartAuto(interval);
+							display->ChangeMode(DisplayForIntervalometer::count);
+							display->SetNewValue(numToDisplay);
+						} 
+						currentMode = running;
+						display->ChangeMode(DisplayForIntervalometer::count);
 					}
-				}
-				break;
-			case RemoteForIntervalometer::none:
-				//** delay(DELAY);
-				break;
+					break;
+				case RemoteForIntervalometer::stop:
+					if (currentMode == running || currentMode == paused || currentMode == instant) {
+						currentMode = input;
+						display->ChangeMode(DisplayForIntervalometer::input);
+						numToDisplay = 0;
+						display->ChangeMode(DisplayForIntervalometer::input);
+						display->SetNewValue(numToDisplay);
+					}
+					displayTimeout->Stop();
+					break;
+				case RemoteForIntervalometer::pause:
+					if (currentMode == running) {
+						currentMode = paused;
+						flashTimer->Restart();
+					}
+					break;
+				case RemoteForIntervalometer::brightDown:
+					display->DecreaseBrighness();
+					break;
+				case RemoteForIntervalometer::brightUp:
+					display->IncreaseBrighness();
+					break;
+				case RemoteForIntervalometer::toggleDiplay:
+					display->ToggleDisplayState();
+					break;
+				case RemoteForIntervalometer::deleteLastChar:
+					if (currentMode != input) {
+						break;
+					}
+					if (numToDisplay >= 10) {
+						numToDisplay /= 10;
+					} else {
+						numToDisplay = 0;
+					}
+					display->SetNewValue(numToDisplay);
+					inputError = false;
+					break;
+					display->SetNewValue(numToDisplay);
+				case RemoteForIntervalometer::resetDisplay:
+					if (currentMode != input) {
+						break;
+					}
+					numToDisplay = 0;
+					inputError = false;
+					display->SetNewValue(numToDisplay);
+					break;
+				case RemoteForIntervalometer::takePicture:
+					displayTimeout->Stop();
+					if (currentMode == input) {
+						currentMode = instant;
+						display->ChangeMode(DisplayForIntervalometer::time);
+						intervalTimer->Stop();
+						if (numToDisplay > 0) {
+							previousTime = numToDisplay;
+							interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
+							flashTimer->Restart();
+							intervalTimer->StartAuto(interval - 100);
+							display->ChangeMode(DisplayForIntervalometer::time);
+							display->SetNewValue(numToDisplay);
+						}
+					}
+					break;
+				case RemoteForIntervalometer::none:
+					return false;
+					break;
 			}
 		}
+		return true;
 	}
+	return false;
 }
+
+RemoteForIntervalometer::mode RemoteForIntervalometer::GetCurrentMode()
+{
+	return currentMode;
+}
+void RemoteForIntervalometer::SetNewMode(RemoteForIntervalometer::mode newMode)
+{
+	currentMode = newMode;
+}
+bool RemoteForIntervalometer::GetInputError()
+{
+	return inputError;
+}
+void RemoteForIntervalometer::ResetToPreviousTime()
+{
+	numToDisplay = previousTime;
+	display->ChangeMode(DisplayForIntervalometer::input);
+	display->SetNewValue(numToDisplay);
+}
+
 RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsigned long irValue)
 {
     if (irValue != REPEAT) {

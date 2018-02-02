@@ -7,7 +7,7 @@ class Timer{
 private:
   unsigned long lastTrigger;
   unsigned long startTime;
-  bool watching;
+  bool running;
   bool autoRestart = false;
   unsigned long period = 0;
   unsigned long count = 0;
