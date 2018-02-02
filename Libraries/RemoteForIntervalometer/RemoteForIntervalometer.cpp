@@ -1,10 +1,10 @@
 
 #include "RemoteForIntervalometer.h"
 
-RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalTimer, Timer* pDisplayTimeout, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*callTakePicture)() )
+RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalTimer, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*callTakePicture)() )
 {
 	intervalTimer = pIntervalTimer;
-	displayTimeout = pDisplayTimeout;
+	displayTimeout.Start(DISPLAY_TIMEOUT);
 	flashTimer = pFlashTimer;
 	display = pDisplay;
 	this->callTakePicture = callTakePicture;
@@ -14,7 +14,7 @@ RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer* pInterval
 
 bool RemoteForIntervalometer::ProcessRemoteInput()
 {
-	if (displayTimeout->IsElapse() && displayToogleStatus) {
+	if (displayTimeout.IsElapse() && displayToogleStatus) {
 		display->TurnDisplayOff();
 	}
 	if (GetCurrentMode() == RemoteForIntervalometer::paused || GetInputError()) {
@@ -24,7 +24,6 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 	}
 	if (irDetect->decode(&irIn)) {
 		unsigned long irValue = irIn.value;
-		Serial.println(irValue, HEX);
 		irDetect->resume(); // Receive the next value
 		remoteActions lastRemoteAction = GetAction(irValue);
 		if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
@@ -32,7 +31,7 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 			if (lastRemoteAction != RemoteForIntervalometer::toggleDiplay) {
 				display->TurnDisplayOn();
 			}
-			displayTimeout->Restart();
+			displayTimeout.Restart();
 		}
 		if (lastRemoteAction >= RemoteForIntervalometer::one && lastRemoteAction <= RemoteForIntervalometer::zero && currentMode == input ) {
 			// Process digit in input mode
@@ -52,7 +51,7 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 				case RemoteForIntervalometer::startFast:
 					// Set snapshoot interval
 					if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
-						displayTimeout->Restart();
+						displayTimeout.Restart();
 						if (currentMode == input) {   
 							if (lastRemoteAction == RemoteForIntervalometer::startFast) {
 								if (numToDisplay % 100 > 59) {
@@ -82,7 +81,7 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 						display->ChangeMode(DisplayForIntervalometer::input);
 						display->SetNewValue(numToDisplay);
 					}
-					displayTimeout->Stop();
+					displayTimeout.Stop();
 					break;
 				case RemoteForIntervalometer::pause:
 					if (currentMode == running) {
@@ -127,7 +126,7 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 					display->SetNewValue(numToDisplay);
 					break;
 				case RemoteForIntervalometer::takePicture:
-					displayTimeout->Stop();
+					displayTimeout.Stop();
 					if (currentMode == input) {
 						currentMode = instant;
 						display->ChangeMode(DisplayForIntervalometer::time);

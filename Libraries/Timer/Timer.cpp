@@ -54,9 +54,6 @@ bool Timer::IsElapse()
 	if ((curMillis < lastTrigger) || ((lastTrigger + period) < curMillis)) {
 		if (autoRestart) {
 			lastTrigger = startTime + (period * count++);
-			Serial.print(period, DEC);
-			Serial.print(" ");
-			Serial.println("Elapse");
 			return true;	
 		}
 		running = false;

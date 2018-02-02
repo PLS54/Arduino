@@ -10,11 +10,9 @@
 #define RELAY_PIN         10
 #define IR_PIN            11
 #define LOOP_DELAY        1
-#define DISPLAY_TIMEOUT   10000
 #define FLASHES           250
 
 Timer* intervalTimer;
-Timer* displayTimeout;
 Timer* flashTimer(500);
 DisplayForIntervalometer* myDisplay;
 RemoteForIntervalometer* myRemote;
@@ -29,16 +27,13 @@ void takePicture()
 
 void setup()
 {
-  Serial.begin(9600);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
 
   intervalTimer = new Timer();
-  displayTimeout = new Timer();
-  displayTimeout->Start(DISPLAY_TIMEOUT);
   flashTimer = new Timer(FLASHES);
   myDisplay = new DisplayForIntervalometer(CLK, DIO);
-  myRemote = new RemoteForIntervalometer(IR_PIN, intervalTimer, displayTimeout, flashTimer, myDisplay, takePicture);
+  myRemote = new RemoteForIntervalometer(IR_PIN, intervalTimer, flashTimer, myDisplay, takePicture);
   //
   // Even if this is not used here it must be done for the class RemoteForIntervalometer to work wirh IR receiver
   //
@@ -72,15 +67,11 @@ void ProcessIntantMode()
 {
   if (!intervalTimer->Running()) {
     myDisplay->ToggleDisplayState();
-    Serial.println("Not Here");
     takePicture();
     myRemote->ResetToPreviousTime();
   } else {
     bool timerState = intervalTimer->IsElapse();
-    Serial.print("Timer state: ");
-    Serial.println(timerState);
     if (timerState) {
-      Serial.println("HERE");
       myDisplay->TurnDisplayOn();
       myDisplay->SetNewValue(0);
       takePicture();  

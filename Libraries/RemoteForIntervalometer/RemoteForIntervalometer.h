@@ -62,6 +62,7 @@
 #define ZERO			0x373119
 #define MUTING			0x36F920 // MENU
 */
+#define DISPLAY_TIMEOUT   60000
 
 class RemoteForIntervalometer
 {
@@ -73,7 +74,7 @@ public:
 	bool IsCommand(unsigned long command, unsigned long irValue, bool withRepeat = false);
 
 	Timer* intervalTimer;
-	Timer* displayTimeout;
+	Timer displayTimeout;
 	Timer* flashTimer;
 	DisplayForIntervalometer* display;
 	void (*callTakePicture)();
@@ -96,7 +97,7 @@ public:
 	remoteActions GetAction(unsigned long irValue);
 
 public:
-	RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalometerTimer, Timer* pDisplayTimeout, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*caLLtakePicture)());
+	RemoteForIntervalometer(uint8_t irPin, Timer* pIntervalometerTimer, Timer* pFlashTimer, DisplayForIntervalometer* pDisplay, void (*caLLtakePicture)());
 	bool ProcessRemoteInput();
 	RemoteForIntervalometer::mode GetCurrentMode();
 	void SetNewMode(RemoteForIntervalometer::mode newMode);
