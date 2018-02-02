@@ -14,7 +14,7 @@ RemoteForIntervalometer::RemoteForIntervalometer(uint8_t irPin, Timer* pInterval
 
 bool RemoteForIntervalometer::ProcessRemoteInput()
 {
-	if (displayTimeout->IsElapse()) {
+	if (displayTimeout->IsElapse() && displayToogleStatus) {
 		display->TurnDisplayOff();
 	}
 	if (GetCurrentMode() == RemoteForIntervalometer::paused || GetInputError()) {
@@ -24,6 +24,7 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 	}
 	if (irDetect->decode(&irIn)) {
 		unsigned long irValue = irIn.value;
+		Serial.println(irValue, HEX);
 		irDetect->resume(); // Receive the next value
 		remoteActions lastRemoteAction = GetAction(irValue);
 		if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
@@ -98,6 +99,12 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 				case RemoteForIntervalometer::toggleDiplay:
 					display->ToggleDisplayState();
 					break;
+				case RemoteForIntervalometer::disableDisplayToggle:
+					displayToogleStatus = false;
+					break;
+				case RemoteForIntervalometer::enableDisplayToggle:
+					displayToogleStatus = true;
+					break;
 				case RemoteForIntervalometer::deleteLastChar:
 					if (currentMode != input) {
 						break;
@@ -125,11 +132,11 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 						currentMode = instant;
 						display->ChangeMode(DisplayForIntervalometer::time);
 						intervalTimer->Stop();
+						previousTime = numToDisplay;
 						if (numToDisplay > 0) {
-							previousTime = numToDisplay;
 							interval = (((numToDisplay / 100) * 60) + numToDisplay % 100) * 1000;
 							flashTimer->Restart();
-							intervalTimer->StartAuto(interval - 100);
+							intervalTimer->StartAuto(interval);
 							display->ChangeMode(DisplayForIntervalometer::time);
 							display->SetNewValue(numToDisplay);
 						}
@@ -160,8 +167,10 @@ bool RemoteForIntervalometer::GetInputError()
 void RemoteForIntervalometer::ResetToPreviousTime()
 {
 	numToDisplay = previousTime;
+	currentMode = input;
 	display->ChangeMode(DisplayForIntervalometer::input);
 	display->SetNewValue(numToDisplay);
+	display->TurnDisplayOn();
 }
 
 RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsigned long irValue)
@@ -204,6 +213,12 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
 	}
 	if (IsCommand(YELLOW, irValue)) {
 		return deleteLastChar;
+	}
+	if (IsCommand(RED, irValue)) {
+		return disableDisplayToggle;
+	}
+	if (IsCommand(GREEN, irValue)) {
+		return enableDisplayToggle;
 	}
 	if (IsCommand(PLAY, irValue)) {
 		return start;

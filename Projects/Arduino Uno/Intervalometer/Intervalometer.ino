@@ -9,8 +9,8 @@
 #define CLK               9   //Set the CLK pin connection to the display
 #define RELAY_PIN         10
 #define IR_PIN            11
-#define LOOP_DELAY        100
-#define DISPLAY_TIMEOUT   60000
+#define LOOP_DELAY        1
+#define DISPLAY_TIMEOUT   10000
 #define FLASHES           250
 
 Timer* intervalTimer;
@@ -29,7 +29,7 @@ void takePicture()
 
 void setup()
 {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
 
@@ -51,7 +51,10 @@ void loop()
   if (!myRemote->ProcessRemoteInput()) {
       delay(LOOP_DELAY);
   }
-  if ( intervalTimer->IsElapse() && myRemote->GetCurrentMode() == RemoteForIntervalometer::running) {
+  if (myRemote->GetCurrentMode() == RemoteForIntervalometer::paused) {
+    intervalTimer->IsElapse(); // pump the interval timer
+  }
+  if (myRemote->GetCurrentMode() == RemoteForIntervalometer::running && intervalTimer->IsElapse()) {
     // Snap picture when timer elapse
     takePicture();
     myDisplay->SetNewValue(myDisplay->GetCurrentValue() + 1);
@@ -69,18 +72,20 @@ void ProcessIntantMode()
 {
   if (!intervalTimer->Running()) {
     myDisplay->ToggleDisplayState();
+    Serial.println("Not Here");
     takePicture();
-    myDisplay->ToggleDisplayState();
-    myRemote->SetNewMode(RemoteForIntervalometer::input);
+    myRemote->ResetToPreviousTime();
   } else {
     bool timerState = intervalTimer->IsElapse();
+    Serial.print("Timer state: ");
+    Serial.println(timerState);
     if (timerState) {
+      Serial.println("HERE");
       myDisplay->TurnDisplayOn();
       myDisplay->SetNewValue(0);
       takePicture();  
-      myRemote->SetNewMode(RemoteForIntervalometer::input);
       myRemote->ResetToPreviousTime();
-      intervalTimer->Stop();
+      //intervalTimer->Stop();
     } else {
       int numToDisplay = intervalTimer->GetTimeLeftBeforeTrigger() / 1000 + 1;
       myDisplay->SetNewValue(numToDisplay);
@@ -88,9 +93,6 @@ void ProcessIntantMode()
     if (flashTimer->IsElapse() && !timerState) {
       myDisplay->ToggleDisplayState();
     }
-  }
-  if (myRemote->GetCurrentMode() == RemoteForIntervalometer::input) {
-    myDisplay->ChangeMode(DisplayForIntervalometer::input);
   }
 }
 

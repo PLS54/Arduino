@@ -47,13 +47,16 @@ bool:: Timer::Running()
 
 bool Timer::IsElapse()
 {
-	if (!running && !autoRestart) {
+	if (!running) {
 		return false;
 	}
 	unsigned long curMillis = millis();
 	if ((curMillis < lastTrigger) || ((lastTrigger + period) < curMillis)) {
 		if (autoRestart) {
 			lastTrigger = startTime + (period * count++);
+			Serial.print(period, DEC);
+			Serial.print(" ");
+			Serial.println("Elapse");
 			return true;	
 		}
 		running = false;

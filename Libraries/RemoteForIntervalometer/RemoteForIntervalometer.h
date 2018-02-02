@@ -17,6 +17,8 @@
 #define RETURN          0xBE108
 #define YELLOW          0xE010C
 #define BLUE            0x2010C
+#define RED				0xA010C
+#define GREEN			0x6010C
 #define ENTER           0x3E108
 #define ONE				0x00108
 #define TWO				0x80108
@@ -42,10 +44,12 @@
 #define UP_ARROW        0x36812F
 #define LEFT_ARROW      0x37810F
 #define RIGHT_ARROW     0x364137
-#define ENTER          0x366133
+#define ENTER           0x366133
 #define YELLOW          0x37E902
 #define BLUE            0x36193C
-#define RETURN           0x36E123
+#define RETURN          0x36E123
+#define RED				0x37191C
+#define GREEN			0x0F7E10
 #define ONE				0x36113D
 #define TWO				0x37111D
 #define THREE			0x36912D
@@ -79,14 +83,16 @@ public:
 	
 	enum remoteActions {none, one, two, three, four, five, six, seven, eight, nine, zero, 
 						start, startFast, pause, stop, brightDown, brightUp, toggleDiplay, 
-						deleteLastChar, resetDisplay, takePicture, endMarker};
+						disableDisplayToggle, enableDisplayToggle, deleteLastChar, resetDisplay, 
+						takePicture, endMarker};
 
 	mode currentMode = input;
 	bool inputError = false;
 	unsigned int previousTime = 0;
-
 	unsigned long numToDisplay = 0;  //Variable to interate
 	unsigned long interval = 0;
+	bool displayToogleStatus = true;
+	
 	remoteActions GetAction(unsigned long irValue);
 
 public:
