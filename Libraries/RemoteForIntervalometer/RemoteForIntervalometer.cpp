@@ -51,7 +51,6 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 				case RemoteForIntervalometer::startFast:
 					// Set snapshoot interval
 					if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
-						displayTimeout.Restart();
 						if (currentMode == input) {   
 							if (lastRemoteAction == RemoteForIntervalometer::startFast) {
 								if (numToDisplay % 100 > 59) {
@@ -81,7 +80,6 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 						display->ChangeMode(DisplayForIntervalometer::input);
 						display->SetNewValue(numToDisplay);
 					}
-					displayTimeout.Stop();
 					break;
 				case RemoteForIntervalometer::pause:
 					if (currentMode == running) {
@@ -126,7 +124,6 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 					display->SetNewValue(numToDisplay);
 					break;
 				case RemoteForIntervalometer::takePicture:
-					displayTimeout.Stop();
 					if (currentMode == input) {
 						currentMode = instant;
 						display->ChangeMode(DisplayForIntervalometer::time);
@@ -201,8 +198,6 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
     if (irValue != REPEAT) {
       lastCommand = irValue;
     }
-	Serial.print("Loocking for -> ");
-	Serial.println(irValue, HEX);
 	if (irValue == SONY_ON){
 		sonyRemoteOn = !sonyRemoteOn;
 	}
