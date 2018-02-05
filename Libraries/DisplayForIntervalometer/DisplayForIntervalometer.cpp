@@ -37,6 +37,11 @@ void DisplayForIntervalometer::TurnDisplayOn()
 	}
 }
 
+bool DisplayForIntervalometer::GetCurrentState()
+{
+	return displayState;
+}
+
 void DisplayForIntervalometer::SetNewValue(int newValue)
 {
 	if(newValue != value) {

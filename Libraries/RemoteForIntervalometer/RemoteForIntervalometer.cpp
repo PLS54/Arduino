@@ -27,14 +27,21 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 		irDetect->resume(); // Receive the next value
 		remoteActions lastRemoteAction = GetAction(irValue);
 		if (lastRemoteAction > RemoteForIntervalometer::none &&  lastRemoteAction < RemoteForIntervalometer::endMarker) {
+			//
 			// Control display state timer - Reset it on a key press
+			//
+			if (lastRemoteAction == RemoteForIntervalometer::disableDisplayToggle || lastRemoteAction == enableDisplayToggle) {
+				FlashDisplay();
+			}
 			if (lastRemoteAction != RemoteForIntervalometer::toggleDiplay) {
 				display->TurnDisplayOn();
 			}
 			displayTimeout.Restart();
 		}
 		if (lastRemoteAction >= RemoteForIntervalometer::one && lastRemoteAction <= RemoteForIntervalometer::zero && currentMode == input ) {
+			//
 			// Process digit in input mode
+			//
 			if (numToDisplay <= 999) {
 				inputError = false;
 				if (lastRemoteAction == RemoteForIntervalometer::zero) {
@@ -49,7 +56,9 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 			switch (lastRemoteAction) {
 				case RemoteForIntervalometer::start:
 				case RemoteForIntervalometer::startFast:
+					//
 					// Set snapshoot interval
+					//
 					if ((currentMode == input && numToDisplay > 0) || currentMode == paused) {
 						if (currentMode == input) {   
 							if (lastRemoteAction == RemoteForIntervalometer::startFast) {
@@ -168,9 +177,12 @@ void RemoteForIntervalometer::ResetToPreviousTime()
 	display->SetNewValue(numToDisplay);
 	display->TurnDisplayOn();
 }
+
+
+
 RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsigned long irValue)
 {
-	lookuptab tab[] = {
+	static lookuptab tab[] = {
 		{0x0200B, 0x37990C, start , "Start"},
 		{0x0400B, 0x374117, pause, "Pause"},
 		{0x0000B, 0x365934, stop, "Stop"},
@@ -199,9 +211,16 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
       lastCommand = irValue;
     }
 	if (irValue == SONY_ON){
+		FlashDisplay();
+		displayTimeout.Restart();
+		display->TurnDisplayOn();
 		sonyRemoteOn = !sonyRemoteOn;
 	}
 	if (irValue == VIDEOTRON_ON){
+		FlashDisplay();
+		displayTimeout.Restart();
+		display->TurnDisplayOn();
+		sonyRemoteOn = !sonyRemoteOn;
 		videotronRemoteOn = !videotronRemoteOn;
 	}
 	for (int i = 0; i < sizeof(tab) / sizeof(*tab); i++) {
@@ -210,4 +229,14 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
 		}
 	}
 	return none;
+}
+
+void RemoteForIntervalometer::FlashDisplay()
+{
+	if (display->GetCurrentState()) {
+		flashTimer->Restart();
+		display->TurnDisplayOff();
+		do {} while (!flashTimer->IsElapse());
+		display->TurnDisplayOn();
+	}
 }

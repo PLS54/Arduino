@@ -15,12 +15,14 @@ class DisplayForIntervalometer
 		void ToggleDisplayState();
 		void TurnDisplayOff();
 		void TurnDisplayOn();
+		bool GetCurrentState();
 		void SetNewValue(int newValue);
 		int GetCurrentValue();
 		void IncreaseBrighness();
 		void DecreaseBrighness();
 		void ChangeMode(mode newMode);
-
+		void FlashDisplay();
+		
 	private:
 		TM1637Display *display = NULL;
 			

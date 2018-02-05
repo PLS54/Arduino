@@ -13,7 +13,7 @@ class RemoteForIntervalometer
 public:
 	enum mode {initial, input, instant, running, paused};
 
-	private:
+private:
 	unsigned long lastCommand = 0;
 	
 	Timer* intervalTimer;
@@ -21,6 +21,7 @@ public:
 	Timer* flashTimer;
 	DisplayForIntervalometer* display;
 	void (*callTakePicture)();
+	void FlashDisplay();
 	IRrecv* irDetect;
 	decode_results irIn;
 
@@ -36,7 +37,6 @@ public:
 		remoteActions action;
 		const char* message;
 	} lookuptab;
-
 
 						
 	mode currentMode = input;

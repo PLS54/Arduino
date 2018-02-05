@@ -1,5 +1,6 @@
+#define VERSION "1.7"
 /*
- *  intervalTimer by PLS Version 1.7
+ *  intervalTimer by PLS Version
  */
 #include <Timer.h>
 #include <RemoteForIntervalometer.h>
@@ -16,17 +17,13 @@ Timer* intervalTimer;
 Timer* flashTimer(500);
 DisplayForIntervalometer* myDisplay;
 RemoteForIntervalometer* myRemote;
-
-void takePicture()
-{
-  digitalWrite(RELAY_PIN, HIGH);
-  delayMicroseconds(100000);  //
-  delay(100);  
-  digitalWrite(RELAY_PIN, LOW); 
-}
+void takePicture();
 
 void setup()
 {
+  Serial.begin(9600);
+  Serial.print("Version: ");
+  Serial.println(VERSION);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
 
@@ -62,7 +59,6 @@ void loop()
   }
 }
 
-
 void ProcessIntantMode()
 {
   if (!intervalTimer->Running()) {
@@ -85,5 +81,13 @@ void ProcessIntantMode()
       myDisplay->ToggleDisplayState();
     }
   }
+}
+
+void takePicture()
+{
+  digitalWrite(RELAY_PIN, HIGH);
+  delayMicroseconds(100000);  //
+  delay(100);  
+  digitalWrite(RELAY_PIN, LOW); 
 }
 
