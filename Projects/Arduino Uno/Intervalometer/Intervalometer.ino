@@ -1,4 +1,4 @@
-#define VERSION "1.7"
+#define VERSION "1.8"
 /*
  *  intervalTimer by PLS Version
  */
@@ -22,7 +22,8 @@ void takePicture();
 void setup()
 {
   Serial.begin(9600);
-  Serial.print("Version: ");
+  char* tst;
+  Serial.print("Intervalometer version: ");
   Serial.println(VERSION);
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
