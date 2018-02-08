@@ -22,7 +22,7 @@ void takePicture();
 void setup()
 {
   Serial.begin(9600);
-  Serial.printf("Intervalometer version: %s\n", VERSION);
+  Serial.printf("Experimental Intervalometer version: %s\n", VERSION);
   
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
