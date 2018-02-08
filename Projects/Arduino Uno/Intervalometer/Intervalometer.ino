@@ -22,9 +22,8 @@ void takePicture();
 void setup()
 {
   Serial.begin(9600);
-  char* tst;
-  Serial.print("Intervalometer version: ");
-  Serial.println(VERSION);
+  Serial.printf("Intervalometer version: %s\n", VERSION);
+  
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
 
