@@ -30,9 +30,6 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 			//
 			// Control display state timer - Reset it on a key press
 			//
-			if (lastRemoteAction == RemoteForIntervalometer::disableDisplayToggle || lastRemoteAction == enableDisplayToggle) {
-				FlashDisplay();
-			}
 			if (lastRemoteAction != RemoteForIntervalometer::toggleDiplay) {
 				display->TurnDisplayOn();
 			}
@@ -106,9 +103,15 @@ bool RemoteForIntervalometer::ProcessRemoteInput()
 					display->ToggleDisplayState();
 					break;
 				case RemoteForIntervalometer::disableDisplayToggle:
+					if (displayToogleStatus) {
+						FlashDisplay();
+					}
 					displayToogleStatus = false;
 					break;
 				case RemoteForIntervalometer::enableDisplayToggle:
+					if (!displayToogleStatus) {
+						FlashDisplay();
+					}
 					displayToogleStatus = true;
 					break;
 				case RemoteForIntervalometer::deleteLastChar:
@@ -220,7 +223,6 @@ RemoteForIntervalometer::remoteActions RemoteForIntervalometer::GetAction(unsign
 		FlashDisplay();
 		displayTimeout.Restart();
 		display->TurnDisplayOn();
-		sonyRemoteOn = !sonyRemoteOn;
 		videotronRemoteOn = !videotronRemoteOn;
 	}
 	for (int i = 0; i < sizeof(tab) / sizeof(*tab); i++) {

@@ -1,4 +1,4 @@
-#define VERSION "1.8"
+#define VERSION "1.9"
 /*
  *  intervalTimer by PLS Version
  */
