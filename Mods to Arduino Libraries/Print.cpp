@@ -275,6 +275,10 @@ size_t Print::printf(char* format, ...)
 	va_end(argptr);
 
 	tst = (char *) malloc(n);
+	if (tst == NULL) {
+		prinln("Memory allocation error");
+		return 0;
+	}
 	va_start(argptr, format);
 	vsnprintf(tst, n, format, argptr);
 	va_end(argptr);
