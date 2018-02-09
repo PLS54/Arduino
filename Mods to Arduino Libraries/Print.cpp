@@ -276,7 +276,7 @@ size_t Print::printf(char* format, ...)
 
 	tst = (char *) malloc(n);
 	if (tst == NULL) {
-		prinln("Memory allocation error");
+		println("Memory allocation error");
 		return 0;
 	}
 	va_start(argptr, format);
