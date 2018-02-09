@@ -26,6 +26,11 @@ void setup()
   
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
+
+  myDisplay = new DisplayForIntervalometer(CLK, DIO);
+  myDisplay->ChangeMode(DisplayForIntervalometer::count);
+  myDisplay->SetNewValue(0);
+
   if (false) {
     intervalTimer = new Timer();
     flashTimer = new Timer(FLASHES);
@@ -100,6 +105,6 @@ void takePicture()
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
 SIGNAL(TIMER0_COMPA_vect) 
 {
-  takePicture();
+  myDisplay->SetNewValue(  myDisplay->GetCurrentValue() + 1);
 } 
 
