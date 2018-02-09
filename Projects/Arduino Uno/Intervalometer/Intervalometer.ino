@@ -26,20 +26,26 @@ void setup()
   
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW); 
-
-  intervalTimer = new Timer();
-  flashTimer = new Timer(FLASHES);
-  myDisplay = new DisplayForIntervalometer(CLK, DIO);
-  myRemote = new RemoteForIntervalometer(IR_PIN, intervalTimer, flashTimer, myDisplay, takePicture);
-  //
-  // Even if this is not used here it must be done for the class RemoteForIntervalometer to work wirh IR receiver
-  //
-  IRrecv irDetect(IR_PIN);
-  irDetect.enableIRIn(); // Start the Receiver
+  if (false) {
+    intervalTimer = new Timer();
+    flashTimer = new Timer(FLASHES);
+    myDisplay = new DisplayForIntervalometer(CLK, DIO);
+    myRemote = new RemoteForIntervalometer(IR_PIN, intervalTimer, flashTimer, myDisplay, takePicture);
+    //
+    // Even if this is not used here it must be done for the class RemoteForIntervalometer to work wirh IR receiver
+    //
+    IRrecv irDetect(IR_PIN);
+    irDetect.enableIRIn(); // Start the Receiver
+  }  
+  // Timer0 is already used for millis() - we'll just interrupt somewhere
+  // in the middle and call the "Compare A" function below
+  OCR0A = 0xAF;
+  TIMSK0 |= _BV(OCIE0A);
 }
 
 void loop()
 {
+  if (true) return;
   if (!myRemote->ProcessRemoteInput()) {
       delay(LOOP_DELAY);
   }
@@ -90,4 +96,10 @@ void takePicture()
   delay(100);  
   digitalWrite(RELAY_PIN, LOW); 
 }
+
+// Interrupt is called once a millisecond, looks for any new GPS data, and stores it
+SIGNAL(TIMER0_COMPA_vect) 
+{
+  takePicture();
+} 
 
