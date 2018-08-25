@@ -1,5 +1,6 @@
+#define VERSION "2.3"
 //
-// Garage door opener 2.2
+// Garage door opener
 //
 #include <Timer.h>
 
@@ -9,9 +10,11 @@
 #define LOOP_DELAY 500
 #define DOOR_OPEN_TIME 15000
 #define PULSE_WIDTH 200
-#define CLOSE_DISTANCE 5.0
+#define CLOSE_DISTANCE 9.0
 #define REPORT_TIME 300000
+//#define REPORT_TIME 2000
 
+bool getDoorState();
 
 bool currentDoorState = getDoorState();
 bool doPulse = false;
@@ -22,6 +25,7 @@ ZUNO_SETUP_CHANNELS(ZUNO_SWITCH_BINARY(getter, setter));
 
 void setup() 
 {
+  Serial.begin(9600);
   pinMode(DOOR_PIN, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
@@ -38,6 +42,8 @@ void loop()
     zunoSendReport(1);
   }
   if (doPulse) {
+    reportStatus();
+    Serial.println("Pulsing door");
     pulse(PULSE_WIDTH);
     doPulse = false;
     doorOpeningTimer.Start(DOOR_OPEN_TIME);
@@ -50,10 +56,20 @@ void loop()
     zunoSendReport(1);
   }
   if (reporter.IsElapse()) {
+    reportStatus();
+    //
     currentDoorState = getDoorState();
     zunoSendReport(1);
   }
   delay(LOOP_DELAY);
+}
+
+void reportStatus()
+{
+    pulse(PULSE_WIDTH);
+  Serial.print("Garage Door Opener version ");
+  Serial.println(VERSION);
+  Serial.println(MeasureDistance(TRIG_PIN, ECHO_PIN));
 }
 
 bool getDoorState()
@@ -73,11 +89,12 @@ void pulse(int duration)
 float MeasureDistance(int trigPin, int echoPin)
 {
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
+  delayMicroseconds(5);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  unsigned long pulseLength = pulseIn(echoPin, HIGH, 1000);
+  unsigned long pulseLength = pulseIn(echoPin, HIGH, 1000000
+  );
   if (pulseLength == 0) {
     return 100.0;
   }
