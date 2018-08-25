@@ -40,7 +40,7 @@ void Timer::Restart()
 	StartAuto(this->period);
 }
 
-bool:: Timer::Running()
+bool Timer::Running()
 {
 	return running;
 }
