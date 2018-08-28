@@ -10,9 +10,8 @@
 #define LOOP_DELAY 500
 #define DOOR_OPEN_TIME 15000
 #define PULSE_WIDTH 200
-#define CLOSE_DISTANCE 9.0
+#define CLOSE_DISTANCE 10.0
 #define REPORT_TIME 300000
-//#define REPORT_TIME 2000
 
 bool getDoorState();
 
@@ -66,7 +65,6 @@ void loop()
 
 void reportStatus()
 {
-    pulse(PULSE_WIDTH);
   Serial.print("Garage Door Opener version ");
   Serial.println(VERSION);
   Serial.println(MeasureDistance(TRIG_PIN, ECHO_PIN));
